@@ -9,6 +9,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 @WebServlet("/TweetServlet")
 public class TweetServlet extends HttpServlet implements Servlet {
@@ -30,6 +31,19 @@ public class TweetServlet extends HttpServlet implements Servlet {
 		double latitude = Double.parseDouble(request.getParameter("lat")) ;
 		PrintWriter pw = response.getWriter() ;
 		String tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), "asd", MediaType.PHOTO, false) ;
+		HttpSession session = request.getSession(false);
+		boolean checkInit = false;
+		if (session != null && checkInit == false) {
+			String accessToken =(String) session.getAttribute("accessToken");
+			String accessTokenSecret = (String) session.getAttribute("accessTokenSecret");
+			this.tweetCrawler.init(accessToken, accessTokenSecret);
+			tweets = this.tweetCrawler.getPrivateTweets(new Location(latitude,longitude), "asd", MediaType.PHOTO, false);
+			checkInit = true;
+		} else {
+			this.tweetCrawler.init();
+			tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), "asd", MediaType.PHOTO, false) ;
+			checkInit = true;
+		}
 		pw.print(tweets) ;
 		pw.flush() ;
 		

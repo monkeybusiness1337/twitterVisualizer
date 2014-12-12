@@ -30,8 +30,8 @@ public class CallbackServlet extends HttpServlet implements Servlet{
 		} catch (TwitterException te) {
 			throw new ServletException(te);
 		}
-		/*request.getSession().setAttribute("accessToken", accessToken.getToken());
-		request.getSession().setAttribute("accessTokenSecret", accessToken.getTokenSecret());*/
+		request.getSession().setAttribute("accessToken", accessToken.getToken().toString());
+		request.getSession().setAttribute("accessTokenSecret", accessToken.getTokenSecret().toString());
 		response.sendRedirect(request.getContextPath() + "/gmapssave.html");
 	}
 	

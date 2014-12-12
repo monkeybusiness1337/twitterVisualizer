@@ -76,6 +76,35 @@ public class TweetCrawler {
 		return jsonResult.toString() ;
 	}
 	
+	public String getPrivateTweets(Location gps, String topic, MediaType mediaType, boolean isHotTopic) {
+		ArrayList<JSONObject> tweetResults = new ArrayList<JSONObject>();
+		JSONObject jsonResult = new JSONObject();
+		try {
+			List<Status> tweets = this.twitter.getHomeTimeline();
+
+			for (Status tweet : tweets) {
+				tweetResults.add(getJSONGeoTweet(tweet)) ;
+			}
+
+			
+			jsonResult.put("satus", "sucess") ;
+			jsonResult.put("result", tweetResults) ;
+		} catch (TwitterException te) {
+			System.out.println("Failed to search tweets: " + te.getMessage());
+			System.exit(-1);
+		} catch(JSONException te){
+			System.out.println("Failed to search tweets: " + te.getMessage());
+			System.exit(-1);
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return jsonResult.toString();
+	}
+	
 	public JSONObject getJSONGeoTweet(Status tweet) throws JSONException, UnsupportedEncodingException, NoSuchAlgorithmException {
 		JSONObject obj = new JSONObject() ;
 				
@@ -118,13 +147,13 @@ public class TweetCrawler {
 		this.twitter = tf.getInstance();
 	}
 	
-	public void init(String oauthToken, String oauthTokenSecret){
+	public void init(String accessToken, String accessTokenSecret){
 		ConfigurationBuilder cb = new ConfigurationBuilder();
 		cb.setDebugEnabled(true)
-		  .setOAuthConsumerKey("PWy8QfzaVHB2ZHaZGEJEkKx5L")
-		  .setOAuthConsumerSecret("M7VXYkb4eD6bF7qgTZPHrHaKdiDdQcO34ofFGw5AhtrfJ0O0x6")
-		  .setOAuthAccessToken(oauthToken)
-		  .setOAuthAccessTokenSecret(oauthTokenSecret);
+		  .setOAuthConsumerKey("qABUB28LHgAo5qBAfDilreErv")
+		  .setOAuthConsumerSecret("xWH51vGMrcP3YnddeF3v1D0WHQ1vdSZEmjGZ3MqXA7AtKAiotP")
+		  .setOAuthAccessToken(accessToken)
+		  .setOAuthAccessTokenSecret(accessTokenSecret);
 		TwitterFactory tf = new TwitterFactory(cb.build());
 		this.twitter = tf.getInstance();
 	}
