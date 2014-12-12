@@ -25,7 +25,7 @@ public class TweetCrawler {
 	public static double RADIUS = 10.0f ;
 	public static Unit LENGTHUNIT = Query.KILOMETERS ;
 	
-	private Twitter twitter ;
+	protected Twitter twitter ;
 	
 	// Test
 	public static void main(String args[]){
@@ -37,6 +37,7 @@ public class TweetCrawler {
 	public TweetCrawler(){
 		init() ;
 	}
+	
 	
 	public String getTweets(Location gps, String topic, MediaType mediaType, boolean isHotTopic) {
 		Query query = new Query("");
@@ -117,6 +118,16 @@ public class TweetCrawler {
 		this.twitter = tf.getInstance();
 	}
 	
+	public void init(String oauthToken, String oauthTokenSecret){
+		ConfigurationBuilder cb = new ConfigurationBuilder();
+		cb.setDebugEnabled(true)
+		  .setOAuthConsumerKey("PWy8QfzaVHB2ZHaZGEJEkKx5L")
+		  .setOAuthConsumerSecret("M7VXYkb4eD6bF7qgTZPHrHaKdiDdQcO34ofFGw5AhtrfJ0O0x6")
+		  .setOAuthAccessToken(oauthToken)
+		  .setOAuthAccessTokenSecret(oauthTokenSecret);
+		TwitterFactory tf = new TwitterFactory(cb.build());
+		this.twitter = tf.getInstance();
+	}
 	String parse(String tweetText) {
 		 
 	     // Search for URLs

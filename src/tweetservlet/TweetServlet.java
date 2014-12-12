@@ -32,6 +32,12 @@ public class TweetServlet extends HttpServlet implements Servlet {
 		String tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), "asd", MediaType.PHOTO, false) ;
 		pw.print(tweets) ;
 		pw.flush() ;
+		
+		// if session set and .init(..,..) wasn't executed now
+		//oauthToken = session.getParameter("oauthToken") ;
+		//tweetCrawler.init(oauthToken, oauthTokenSecret);
+		// else flag logout set
+		//tweetCrawler.init() ;
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
