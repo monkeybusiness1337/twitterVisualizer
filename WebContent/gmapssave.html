@@ -15,15 +15,31 @@
 <!-- Latest compiled and minified JavaScript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 
+<style>
+.glyphicon-refresh-animate {
+    -animation: spin .7s infinite linear;
+    -webkit-animation: spin2 .7s infinite linear;
+}
+
+@-webkit-keyframes spin2 {
+    from { -webkit-transform: rotate(0deg);}
+    to { -webkit-transform: rotate(360deg);}
+}
+</style>
 
 <script>
 
 geoTweets = [] ; 
+userLocation = null ;
+userTopic = null ;
+markersAdded = 0 ;
+MAX_MARKERS = 10000 ;
+currentLocation = null ;
 $( document ).ready(function() {
 	$('#welcomeMessageContainer').fadeIn("slow") ;
 	
 	$('#letsStartButton').click(function(){
-		$('#welcomeMessageContainer').fadeOut("slow") ;
+		$('#welcomeMessageContainer').fadeOut("slow").html('') ;
 	}) ;
 	
 	$('#openLoginPanel').click(function(){
@@ -35,11 +51,12 @@ $( document ).ready(function() {
 	}) ;
 	
 	$('#search').click(function(){
-		var city = $('#searchField').val() ;
+		/*var city = $('#searchField').val() ;
 		$.getJSON("http://maps.googleapis.com/maps/api/geocode/json?address="+city, function( data ) {
 			if($('#searchField').val().charAt(0) == '#'){
 				alert("oh u wanna find a topic, thats not implemented yet ;D") ;
 			} else{
+				initialize() ;
 				if(data.results.length > 0){
 					var latLng = new google.maps.LatLng(data.results[0].geometry.location.lat, data.results[0].geometry.location.lng); //Makes a latlng
 				    map.panTo(latLng); //Make map global
@@ -47,8 +64,107 @@ $( document ).ready(function() {
 					alert("nothing found bro ;D") ;
 				}
 			}
-		});
+		});*/
+		if($('#searchField').val().charAt(0) == '#'){
+			//alert("oh u wanna find a topic, thats not implemented yet ;D") ;
+			userTopic = $('#searchField').val() ;
+			var userTopicLabel = '<div class="btn-group" style="margin-left:5px">' +
+			 '<button class="btn btn-sm btn-primary" style="opacity:0.8">'+userTopic+'</button>' +
+	  		 '<button class="btn btn-sm btn-primary" id="deleteUserTopic" style="opacity:0.8"><span class="glyphicon glyphicon-remove"></span></button>' +
+			 '</div>' ;
+			$('#trendContainer').append(userTopicLabel).fadeIn("slow") ;
+			var mapCenter = map.getCenter() ;
+			var centerLat = mapCenter.k ;
+			var centerLong = mapCenter.B ;
+			var center = {'lat': centerLat, 'longi': centerLong} ;
+			initialize(center) ;
+		} else{
+			var city = $('#searchField').val() ;
+			$.getJSON("http://maps.googleapis.com/maps/api/geocode/json?address="+city, function( data ) {
+				initialize() ;
+				if(data.results.length > 0){
+					var latLng = new google.maps.LatLng(data.results[0].geometry.location.lat, data.results[0].geometry.location.lng); //Makes a latlng
+				    map.panTo(latLng); //Make map global
+				} else{
+					alert("nothing found bro ;D") ;
+				}
+			});
+		}
+		//$('#searchField').val('') ;
 	}) ;
+	
+	$('#searchField').click(function(){
+		if(!$('#searchField').hasClass("expanded")){
+			$("#searchField").animate({'width': '+=100px'}, 500);
+			$("#searchField").addClass("expanded") ;
+		}
+	}) ;
+	
+	$('#searchField').focusout(function(){
+		$("#searchField").animate({'width': '-=100px'}, 500);
+		$("#searchField").removeClass("expanded") ;
+	}) ;
+	
+	$(window).keydown(function(event){
+	    if(event.keyCode == 13) {
+	      event.preventDefault();
+	      
+	      if($("#searchField").is(":focus")){
+	    	  $('#search').click() ;
+	      }
+	      
+	      return false;
+	    }
+	  });
+	
+	
+	$('#trendContainer').on('click', '#deleteUserTopic', function(){
+		console.log("hello") ;
+		userTopic = null ;
+		$('#trendContainer').fadeOut('slow') ;
+		initialize() ;
+	}) ;
+	
+	$('.navbar ul li a').click(function(){
+		$('.navbar ul li').removeClass("active") ;
+		$(this).parent().addClass("active") ;
+		if($(this).attr("class") == "hotTopics"){
+			$.getJSON("TweetServlet?getTrends", function( data ) {
+				var trends = data.trends ;
+				var trendList = '' ;
+				for(var i = 0 ; i < trends.length ; i++){
+					trendList += '<div class="btn-group" style="margin-left:5px">' +
+								 '<button class="btn btn-sm btn-success" style="opacity:0.8">'+trends[i]+'</button>' +
+						  		 '<button class="btn btn-sm btn-success" style="opacity:0.8"><span class="glyphicon glyphicon-remove"></span></button>' +
+								 '</div>' ;
+				}
+				$('#trendContainer').html(trendList) ;
+			});
+			
+			$('#trendContainer').fadeIn("slow") ;
+			initialize() ;
+		} else{
+			$('#trendContainer').fadeOut("slow") ;
+			initialize() ;
+		}
+	}) ;
+	
+	function getLocation() {
+		console.log("hello") ;
+	    if (navigator.geolocation) {
+	        navigator.geolocation.watchPosition(showPosition);
+	    } else {
+	       console.log("Geolocation is not supported by this browser.");
+	    }
+	}
+	function showPosition(position) {
+	    console.log("Latitude: " + position.coords.latitude + 
+	    ";Longitude: " + position.coords.longitude); 
+	    userLocation = position.coords ;
+	}
+	
+	getLocation() ;
+	
 });
 
 var style_array = [
@@ -115,10 +231,37 @@ var style_array = [
                    {}
                ] ;
                
-function initialize() {
+function initialize(center1) {
+  markersAdded = 0 ;
+  geoTweets = [] ;
+  newTweets = [] ;
+  $('#tweetsLoadedCount').html(0) ;
+  $('#tweetsFound').html("Tweets found") ;
+  var center = new google.maps.LatLng(48.20732, 16.373792) ;
+    
+  console.log("center: " + center1) ;
+  var locationGiven = false ;
+  
+  if(center1 == "[object Event]" || typeof(center1) === "undefined"){
+	  console.log("yeah") ;
+	  locationGiven = false ;
+  } else{
+	  locationGiven = true ;
+  }
+  
+  if(userLocation != null && !locationGiven){
+	  console.log("user enabled tracking, so setting his location..") ;
+	  center = new google.maps.LatLng(userLocation.latitude, userLocation.longitude) ;
+  } else if(locationGiven){
+	  console.log("setting center to given location") ;
+	  center = new google.maps.LatLng(center1.lat, center1.longi) ;
+  } else{
+	  console.log("user diabled tracking, setting center to default location") ;
+  }
+  
   var mapOptions = {
     zoom: 12,
-    center: new google.maps.LatLng(48.20732, 16.373792),
+    center: center,
     styles: style_array,
     disableDefaultUI: true, 
     zoomControl: true, 
@@ -130,21 +273,38 @@ function initialize() {
   map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
   
   google.maps.event.addListener(map, 'idle', function() {
-	    // 3 seconds after the center of the map has changed, pan back to the
-	    // marker.
+    console.log("zoom: " + map.getZoom() ) ;
+  
+	    // 3 seconds after the center of the map has changed
+	    $('#tweetsFound').html("Loading") ;
+	    $('#tweetsLoadedCount').html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>') ;
+	    
+	    var mapCenter = map.getCenter() ;
+		var centerLat = mapCenter.k ;
+		var centerLong = mapCenter.D ;
+		
+		/*currentLocation = {} ;
+		currentLocation.latitude = centerLat ;
+		currentLocation.longitude = centerLong ;
+		
+		console.log("currentLocation in idle: " + currentLocation.latitude + ";" + currentLocation.longitude) ;
+	    */
+	    
 	    window.setTimeout(function() {
-	    	reloatTweets() ;
+	    	if(markersAdded <= MAX_MARKERS)
+	    		reloatTweets() ;
 	    }, 3000);
 	  });
-  
   reloatTweets() ;  
 }
 
 function reloatTweets(){
 	var mapCenter = map.getCenter() ;
 	var centerLat = mapCenter.k ;
-	var centerLong = mapCenter.B ;
-	$.getJSON( "TweetServlet?lat="+centerLat+"&long="+centerLong, function( data ) {
+	var centerLong = mapCenter.D ;
+	var getJustHotTopics = $('.hotTopics').parent().hasClass('active') ? '&trendTweets=true' : '' ;
+	var topic = (userTopic != null) ? "&topic=" + userTopic.substring(1,userTopic.length) : "" ;
+	$.getJSON( "TweetServlet?lat="+centerLat+"&long="+centerLong+getJustHotTopics+topic, function( data ) {
 		var tweetResult = data.result ;
 		var newTweets = [] ;
 		if(geoTweets.length == 0){
@@ -218,8 +378,10 @@ function setMarkers(map, geotweet) {
 }
 
 function addMarker(map, geotweet, image, shape, i){
+	//console.log(markersAdded) ;
 
 	 setTimeout(function() {
+
 		 var beach = location;
 	    var myLatLng = new google.maps.LatLng(geotweet.latitude, geotweet.longitude);
 	     var shape = {
@@ -267,12 +429,16 @@ function addMarker(map, geotweet, image, shape, i){
 	console.log(marker.geotweet.longitude+";"+marker.geotweet.latitude+","+marker.geotweet.hash) ;
   });
   
-   google.maps.event.addListener(marker, 'mouseout', function() {   if(!marker.clicked){
- 	 tweetWindow.close() ;
- 	 marker.clicked = false ;
+   google.maps.event.addListener(marker, 'mouseout', function() {   
+   	if(!marker.clicked){
+ 		tweetWindow.close() ;
+ 		marker.clicked = false ;
    }
 	  
   });
+	markersAdded++ ;
+	$('#tweetsFound').html("Tweets found") ;
+	$('#tweetsLoadedCount').html(markersAdded) ;
 	  }, i * 100);
 }
 
@@ -298,7 +464,7 @@ google.maps.event.addDomListener(window, 'load', initialize);
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
-        <li class="active"><a href="#"><span class="glyphicon glyphicon-asterisk" style="color: green"></span> All Tweets</a></li>
+        <li class="active"><a href="#" class="allTweets"><span class="glyphicon glyphicon-asterisk" style="color: green"></span> All Tweets</a></li>
         
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-eye-open" style="color: blue"></span> Media Tweets <span class="caret"></span></a>
@@ -309,23 +475,27 @@ google.maps.event.addDomListener(window, 'load', initialize);
             <li><a href="#"><span class="glyphicon glyphicon-link"></span> Webpage</a></li>
           </ul>
         </li>
-        <li><a href="#"><span class="glyphicon glyphicon-fire" style="color: darkred"></span> Hot Topics</a></li>
+        <li><a href="#" class="hotTopics"><span class="glyphicon glyphicon-fire" style="color: darkred"></span> Hot Topics</a></li>
       </ul>
       <form class="navbar-form navbar-left" role="search">
         <div class="form-group">
-          <input type="text" id="searchField" class="form-control" placeholder="Find Locations or Topics, e.g. Vienna or #asdf " style="width: 380px">
+          <input type="text" id="searchField" class="form-control" placeholder="Find Locations or Topics, e.g. Vienna or #asdf " style="width: 280px">
         </div>
         <button type="button" class="btn btn-default" id="search">Go!</button>
+        <button class="btn btn-info" type="button" disabled>
+		  <span id="tweetsFound">Tweets found</span> <span class="badge" id="tweetsLoadedCount">4</span>
+		</button>
+        
       </form>
       <ul class="nav navbar-nav navbar-right">
-      <form class="navbar-form navbar-right" role="search">
+      <form class="navbar-form navbar-right" role="search" action="">
         <button type="button" class="btn btn-primary" id="openLoginPanel">Login</button>
       </form>
       </ul>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
 </nav>
-<div id="map-canvas" style="width:100%;height:600px"></div>
+<div id="map-canvas" style="width:100%;height:630px"></div>
 <div class="jumbotron" id="welcomeMessageContainer" style="width:99%; display: none; background-color: white; opacity: 0.75; height: 530px; margin: 0 auto; margin-top: -550px;">
  <h1>Welcome on GeoTweets!</h1><br/>
   <h2>It looks like you are visiting us from <span style="color: blue">Vienna</span>, explore the tweets around you.<br/><br/></h2>
@@ -354,5 +524,8 @@ Password:
   return window.twttr || (t = { _e: [], ready: function (f) { t._e.push(f) } });
 }(document, "script", "twitter-wjs"));</script>
 
+<div id="trendContainer" style="position:absolute;left: 40px; top: 60px;display:none;">
+
+</div>
 </body>
 </html>

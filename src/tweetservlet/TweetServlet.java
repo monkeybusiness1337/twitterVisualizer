@@ -26,12 +26,24 @@ public class TweetServlet extends HttpServlet implements Servlet {
     // test coord: 48.20732f,16.373792f
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		response.setContentType("application/json");
-		double longitude = Double.parseDouble(request.getParameter("long")) ;
-		double latitude = Double.parseDouble(request.getParameter("lat")) ;
 		PrintWriter pw = response.getWriter() ;
-		String tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), "asd", MediaType.PHOTO, false) ;
-		pw.print(tweets) ;
-		pw.flush() ;
+		
+		if(request.getParameterMap().containsKey("long") && request.getParameterMap().containsKey("long")){
+			double longitude = Double.parseDouble(request.getParameter("long")) ;
+			double latitude = Double.parseDouble(request.getParameter("lat")) ;
+			boolean hotTopics = request.getParameterMap().containsKey("trendTweets") ;
+			boolean hasTopic = request.getParameterMap().containsKey("topic") ;
+			String topic = hasTopic ? request.getParameter("topic") : null ;
+			String tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), topic, MediaType.PHOTO, hotTopics) ;
+			pw.print(tweets) ;
+			pw.flush() ;
+		} else if(request.getParameterMap().containsKey("getTrends")){
+			String trends = this.tweetCrawler.getTrends();
+			pw.print(trends) ;
+			pw.flush() ;
+		}
+		
+		
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

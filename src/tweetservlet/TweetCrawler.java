@@ -1,6 +1,6 @@
 package tweetservlet;
+
 import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,11 +16,14 @@ import twitter4j.MediaEntity;
 import twitter4j.Query;
 import twitter4j.QueryResult;
 import twitter4j.Status;
+import twitter4j.Trends;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.Query.Unit;
 import twitter4j.conf.ConfigurationBuilder;
+
+
 public class TweetCrawler {
 	public static double RADIUS = 10.0f ;
 	public static Unit LENGTHUNIT = Query.KILOMETERS ;
@@ -32,6 +35,7 @@ public class TweetCrawler {
 		TweetCrawler ts = new TweetCrawler() ;
 		String tweets = ts.getTweets(new Location(48.20732f,16.373792f), "asd", MediaType.PHOTO, false) ;
 		System.out.print(tweets) ;
+		//ts.getTrends();
 	}
 	
 	public TweetCrawler(){
@@ -39,7 +43,22 @@ public class TweetCrawler {
 	}
 	
 	public String getTweets(Location gps, String topic, MediaType mediaType, boolean isHotTopic) {
-		Query query = new Query("");
+		String queryString = "" ;
+		Query query = new Query();
+		if(isHotTopic){
+			ArrayList<String> trendsArray = this.getTrendsRaw() ;
+			for(int i = 0 ; i < trendsArray.size() ; i++){
+				queryString += trendsArray.get(i) ;
+				if(i != trendsArray.size()-1)
+					queryString += " OR " ;
+			}
+			queryString = "("+queryString+")" + " AND " + topic ;
+		} else{
+			queryString = topic != null ? topic : "" ;
+		}
+		query.setCount(100) ;
+		query.setQuery(queryString);
+		
 		GeoLocation location = new GeoLocation(gps.getLatitude(),gps.getLongitude());
 		query.setGeoCode(location, RADIUS, LENGTHUNIT);
 		QueryResult result;
@@ -47,14 +66,15 @@ public class TweetCrawler {
 		ArrayList<JSONObject> tweetResults = new ArrayList<JSONObject>() ;
 		JSONObject jsonResult = new JSONObject() ;
 		try {
-			do {
+			do {			
 				result = this.twitter.search(query);
 				List<Status> tweets = result.getTweets();
+				
+				if(tweets.size() == 0) break ;
 
 				for (Status tweet : tweets) {
 					tweetResults.add(getJSONGeoTweet(tweet)) ;
 				}
-
 			} while ((query = result.nextQuery()) != null);
 			
 			jsonResult.put("satus", "sucess") ;
@@ -73,6 +93,36 @@ public class TweetCrawler {
 			e.printStackTrace();
 		}
 		return jsonResult.toString() ;
+	}
+	
+	public String getTrends(){
+		JSONObject obj = new JSONObject() ;
+		ArrayList<String> trendsArray = this.getTrendsRaw() ;
+		try {
+			obj.put("trends", trendsArray) ;
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return obj.toString() ;
+	}
+	
+	public ArrayList<String> getTrendsRaw(){
+		Trends trends = null ;
+		ArrayList<String> trendsArray = new ArrayList<String>() ;
+		
+		try {
+			trends = twitter.getPlaceTrends(23424750);
+			
+			for (int i = 0; i < trends.getTrends().length; i++) {
+				trendsArray.add(trends.getTrends()[i].getName());
+			}
+			
+		} catch (TwitterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return trendsArray ;
 	}
 	
 	public JSONObject getJSONGeoTweet(Status tweet) throws JSONException, UnsupportedEncodingException, NoSuchAlgorithmException {
@@ -95,11 +145,6 @@ public class TweetCrawler {
 		}
 		
 		obj.put("media", media) ;
-		
-		
-		byte[] bytesOfMessage = (tweet.getUser().getScreenName()+tweet.getGeoLocation().getLatitude()+tweet.getGeoLocation().getLongitude()).getBytes("UTF-8");
-		MessageDigest md = MessageDigest.getInstance("MD5");
-		byte[] hash = md.digest(bytesOfMessage);
 		
 		obj.put("hash", tweet.getUser().getScreenName()+tweet.getGeoLocation().getLatitude()+tweet.getGeoLocation().getLongitude()) ;
 
