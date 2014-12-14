@@ -53,7 +53,7 @@ public class TweetCrawler {
 				if(i != trendsArray.size()-1)
 					queryString += " OR " ;
 			}
-			queryString = "("+queryString+")" + " AND " + topic ;
+			queryString = "("+queryString+")" + ((topic != null) ? (" AND " + topic) : "") ;
 		} else{
 			queryString = topic != null ? topic : "" ;
 		}
