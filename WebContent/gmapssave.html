@@ -5,6 +5,7 @@
 <script src="http://code.jquery.com/jquery-latest.js"></script>
 
 <script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCkAeVbkH0v4oSDYzcAXPtO8Tn3dHGKlZs&sensor=false"></script>
+<script src="https://google-maps-utility-library-v3.googlecode.com/svn-history/r391/trunk/markerwithlabel/src/markerwithlabel.js"></script>
 
 <!-- Latest compiled and minified CSS -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
@@ -14,7 +15,6 @@
 
 <!-- Latest compiled and minified JavaScript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
-
 <style>
 .glyphicon-refresh-animate {
     -animation: spin .7s infinite linear;
@@ -25,6 +25,96 @@
     from { -webkit-transform: rotate(0deg);}
     to { -webkit-transform: rotate(360deg);}
 }
+
+.videoMarker{
+	background-image: url('vidIcon.png') ;
+	height: 60px ;
+	width: 35px ;
+	background-repeat: no-repeat ;
+	margin-top: -60px !important ;
+	margin-left: -17px !important ;
+	-webkit-animation: pulse 0.7s ease 0.3s 2;
+    -moz-animation: pulse 0.7s ease 0.3s 2;
+    animation: pulse 0.7s ease 3s 2;
+}
+
+.photoMarker{
+	background-image: url('picIcon.png') ;
+	height: 60px ;
+	width: 35px ;
+	background-repeat: no-repeat ;
+	margin-top: -60px !important ;
+	margin-left: -17px !important ;
+	-webkit-animation: pulse 0.7s ease 0.3s 2;
+    -moz-animation: pulse 0.7s ease 0.3s 2;
+    animation: pulse 0.7s ease 3s 2;
+}
+
+.musicMarker{
+	background-image: url('musicIcon.png') ;
+	height: 60px ;
+	width: 35px ;
+	background-repeat: no-repeat ;
+	margin-top: -60px !important ;
+	margin-left: -17px !important ;
+	-webkit-animation: pulse 0.7s ease 0.3s 2;
+    -moz-animation: pulse 0.7s ease 0.3s 2;
+    animation: pulse 0.7s ease 3s 2;
+}
+
+.linkMarker{
+	background-image: url('linkIcon.png') ;
+	height: 60px ;
+	width: 35px ;
+	background-repeat: no-repeat ;
+	margin-top: -60px !important ;
+	margin-left: -17px !important ;
+	-webkit-animation: pulse 0.7s ease 0.3s 2;
+    -moz-animation: pulse 0.7s ease 0.3s 2;
+    animation: pulse 0.7s ease 3s 2;
+}
+
+@-webkit-keyframes pulse {
+ 40% {
+    -webkit-transform: scale(1.3);
+    -moz-transform: scale(1.3);
+    transform: scale(1.3);
+  }
+
+  100% {
+    -webkit-transform: scale(1);
+    -moz-transform: scale(1);
+    transform: scale(1);
+  }
+}
+@-moz-keyframes pulse {
+ 40% {
+    -webkit-transform: scale(1.3);
+    -moz-transform: scale(1.3);
+    transform: scale(1.3);
+  }
+
+  100% {
+    -webkit-transform: scale(1);
+    -moz-transform: scale(1);
+    transform: scale(1);
+  }
+}
+@keyframes pulse {
+  40% {
+    -webkit-transform: scale(1.3);
+    -moz-transform: scale(1.3);
+    transform: scale(1.3);
+  }
+
+  100% {
+    -webkit-transform: scale(1.3);
+    -moz-transform: scale(1.3);
+    transform: scale(1.3);
+  }
+}
+
+
 </style>
 
 <script>
@@ -339,15 +429,6 @@ function reloatTweets(){
 
 function setMarkers(map, geotweet) {
   
-  var markerUrl = 'http://www.michischaaf.at/wp-content/uploads/2014/04/schaaaf_twitter.png' ;
-  
-  var markerUrls = ['musicIcon.png', 'picIcon.png', 'vidIcon.png', 'popularPostIcon.png', 'linkIcon.png'] ;
-  
-  // Shapes define the clickable region of the icon.
-  // The type defines an HTML &lt;area&gt; element 'poly' which
-  // traces out a polygon as a series of X,Y points. The final
-  // coordinate closes the poly by connecting to the first
-  // coordinate.
   var shape = {
       coords: [1, 1, 1, 20, 18, 20, 18 , 1],
       type: 'poly'
@@ -357,29 +438,21 @@ function setMarkers(map, geotweet) {
 	  
 	  // set the right marker depending on mediatype
 	  if(jQuery.isEmptyObject(geotweet[i].media)){
-		  markerUrl = markerUrls[4] ;
+		  markerClass = "linkMarker" ;
 	  } else if(geotweet[i].media.photo != "undefined"){
-		  markerUrl = markerUrls[1] ;
+		  markerClass = "photoMarker" ;
 	  } else if(geotweet[i].media.video != "undefined"){
-		  markerUrl = markerUrls[2] ;
+		  markerClass = "videoMarker" ;
 	  } else if(geotweet[i].media.audio != "undefinded"){
-		  markerUrl = markerUrls[0] ;
+		  markerClass = "musicMarker" ;
 	  }
   
-  var image = {
-    url: markerUrl,
-    /*// This marker is 20 pixels wide by 32 pixels tall.
-    size: new google.maps.Size(40, 40),
-    // The origin for this image is 0,0.
-    origin: new google.maps.Point(0,0),
-    // The anchor for this image is the base of the flagpole at 0,32.
-    anchor: new google.maps.Point(0, 32) */
-  };
-	  addMarker(map,geotweet[i], image, shape, i) ;
+ 
+	  addMarker(map,geotweet[i], markerClass, shape, i) ;
   }
 }
 
-function addMarker(map, geotweet, image, shape, i){
+function addMarker(map, geotweet, markerClass, shape, i){
 	//console.log(markersAdded) ;
 
 	 setTimeout(function() {
@@ -390,14 +463,18 @@ function addMarker(map, geotweet, image, shape, i){
       coords: [1, 1, 1, 40, 40, 40, 40 , 1],
       type: 'poly'
   };
-	    var marker = new google.maps.Marker({
+	    var marker = new MarkerWithLabel({
 	        position: myLatLng,
 	        map: map,
-	        icon: image,
+	        icon: {
+	            path: google.maps.SymbolPath.CIRCLE,
+	            scale: 0, //tamaño 0
+	          },
 	        shape: shape,
 	        //title: beach[0],
 	        zIndex: i, 
-	        animation: google.maps.Animation.DROP
+	        labelClass: markerClass
+	        //animation: google.maps.Animation.DROP
 	    });
 	    marker.geotweet = geotweet ;
 
