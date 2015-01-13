@@ -33,8 +33,10 @@ public class TweetServlet extends HttpServlet implements Servlet {
 			double latitude = Double.parseDouble(request.getParameter("lat")) ;
 			boolean hotTopics = request.getParameterMap().containsKey("trendTweets") ;
 			boolean hasTopic = request.getParameterMap().containsKey("topic") ;
+			boolean hasMediatype = request.getParameterMap().containsKey("mediaType") ;
 			String topic = hasTopic ? request.getParameter("topic") : null ;
-			String tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), topic, MediaType.PHOTO, hotTopics) ;
+			String mediaType = hasMediatype ? request.getParameter("mediaType") : null ;
+			String tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), topic, mediaType, hotTopics) ;
 			pw.print(tweets) ;
 			pw.flush() ;
 		} else if(request.getParameterMap().containsKey("getTrends")){

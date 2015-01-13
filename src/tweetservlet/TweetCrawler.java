@@ -33,7 +33,7 @@ public class TweetCrawler {
 	// Test
 	public static void main(String args[]){
 		TweetCrawler ts = new TweetCrawler() ;
-		String tweets = ts.getTweets(new Location(48.20732f,16.373792f), "asd", MediaType.PHOTO, false) ;
+		String tweets = ts.getTweets(new Location(48.20732f,16.373792f), null, "photo", false) ;
 		System.out.print(tweets) ;
 		//ts.getTrends();
 	}
@@ -43,7 +43,7 @@ public class TweetCrawler {
 	}
 	
 	
-	public String getTweets(Location gps, String topic, MediaType mediaType, boolean isHotTopic) {
+	public String getTweets(Location gps, String topic, String mediaType, boolean isHotTopic) {
 		String queryString = "" ;
 		Query query = new Query();
 		if(isHotTopic){
@@ -74,7 +74,18 @@ public class TweetCrawler {
 				if(tweets.size() == 0) break ;
 
 				for (Status tweet : tweets) {
-					tweetResults.add(getJSONGeoTweet(tweet)) ;
+					if(mediaType != null){
+						ArrayList<MediaEntity> mediaEntities = new ArrayList<MediaEntity>(Arrays.asList(tweet.getMediaEntities())) ;
+						for(MediaEntity mediaEntity : mediaEntities){
+							if(mediaEntity.getType().compareTo(mediaType) == 0){
+								tweetResults.add(getJSONGeoTweet(tweet)) ;
+								break ;
+							}
+						}
+					} else{
+						tweetResults.add(getJSONGeoTweet(tweet)) ;
+					}
+					
 				}
 			} while ((query = result.nextQuery()) != null);
 			

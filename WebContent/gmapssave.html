@@ -35,7 +35,62 @@ userTopic = null ;
 markersAdded = 0 ;
 MAX_MARKERS = 10000 ;
 currentLocation = null ;
+mediaType = null ;
+
 $( document ).ready(function() {
+	
+	$('.videos').click(function(){
+		mediaType = 'video' ;
+		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-video" style="color: orange"></span>') ;
+		$('#videoSelected').show() ;
+	}) ;
+	
+	$('.photos').click(function(){
+		mediaType = 'photo' ;
+		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-camera" style="color: orange"></span>') ;
+		$('#photoSelected').show() ;
+	}) ;
+	
+	$('.weblinks').click(function(){
+		mediaType = 'weblink' ;
+		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-link" style="color: orange"></span>') ;
+		$('#weblinkSelected').show() ;
+	}) ;
+	
+	$('.music').click(function(){
+		mediaType = 'music' ;
+		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-music" style="color: orange"></span>') ;
+		$('#musicSelected').show() ;
+	}) ;
+	
+	$('#videoSelected').click(function(){
+		$('#videoSelected').hide() ;
+		$('#selectedMediaType').html('') ;
+		mediaType = null ;
+		initialize() ;
+	}) ;
+	
+	$('#photoSelected').click(function(){
+		$('#photoSelected').hide() ;
+		$('#selectedMediaType').html('') ;
+		mediaType = null ;
+		initialize() ;
+	}) ;
+	
+	$('#weblinkSelected').click(function(){
+		$('#weblinkSelected').hide() ;
+		$('#selectedMediaType').html('') ;
+		mediaType = null ;
+		initialize() ;
+	}) ;
+	
+	$('#musicSelected').click(function(){
+		$('#musicSelected').hide() ;
+		$('#selectedMediaType').html('') ;
+		mediaType = null ;
+		initialize() ;
+	}) ;
+	
 	$('#welcomeMessageContainer').fadeIn("slow") ;
 	
 	$('#letsStartButton').click(function(){
@@ -143,6 +198,8 @@ $( document ).ready(function() {
 			
 			$('#trendContainer').fadeIn("slow") ;
 			initialize() ;
+		} else if($(this).hasClass('mediaTweets')){
+			
 		} else{
 			$('#trendContainer').fadeOut("slow") ;
 			initialize() ;
@@ -298,14 +355,17 @@ function initialize(center1) {
   reloatTweets() ;  
 }
 
-function reloatTweets(){
+function reloatTweets(filterMediaType){
 	var mapCenter = map.getCenter() ;
 	var centerLat = mapCenter.k ;
 	var centerLong = mapCenter.D ;
 
+	
+	var filterMediaType = (mediaType == null) ? '' : '&mediaType='+mediaType ;
+
 	var getJustHotTopics = $('.hotTopics').parent().hasClass('active') ? '&trendTweets=true' : '' ;
 	var topic = (userTopic != null) ? "&topic=" + userTopic.substring(1,userTopic.length) : "" ;
-	$.getJSON( "TweetServlet?lat="+centerLat+"&long="+centerLong+getJustHotTopics+topic, function( data ) {
+	$.getJSON( "TweetServlet?lat="+centerLat+"&long="+centerLong+getJustHotTopics+topic+filterMediaType, function( data ) {
 
 		var tweetResult = data.result ;
 		var newTweets = [] ;
@@ -335,6 +395,10 @@ function reloatTweets(){
 		}
 		setMarkers(map, newTweets);
 	});
+}
+
+function filterMarkers(mediaType){
+	
 }
 
 function setMarkers(map, geotweet) {
@@ -469,12 +533,12 @@ google.maps.event.addDomListener(window, 'load', initialize);
         <li class="active"><a href="#" class="allTweets"><span class="glyphicon glyphicon-asterisk" style="color: green"></span> All Tweets</a></li>
         
         <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-eye-open" style="color: blue"></span> Media Tweets <span class="caret"></span></a>
+          <a href="#" class="dropdown-toggle mediaTweets" data-toggle="dropdown"><span class="glyphicon glyphicon-eye-open" style="color: blue"></span> Media Tweets<span id="selectedMediaType"></span> <span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
-            <li><a href="#"><span class="glyphicon glyphicon-camera"></span> Photos</a></li>
-            <li><a href="#"><span class="glyphicon glyphicon-facetime-video"></span> Videos</a></li>
-            <li><a href="#"><span class="glyphicon glyphicon-music"></span> Music</a></li>
-            <li><a href="#"><span class="glyphicon glyphicon-link"></span> Webpage</a></li>
+            <li><a href="#" class="photos" style="float: left"><span class="glyphicon glyphicon-camera"></span> Photos</a> <span id="photoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: left; margin-top: 5px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li><a href="#" class="videos" style="float: left"><span class="glyphicon glyphicon-facetime-video"></span> Videos</a> <span id="videoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: left; margin-top: 5px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li><a href="#" class="music" style="float: left"><span class="glyphicon glyphicon-music"></span> Music</a> <span id="musicSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: left; margin-top: 5px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li><a href="#" class="weblinks" style="float: left"><span class="glyphicon glyphicon-link"></span> Webpage</a> <span id="linkSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: left; margin-top: 5px; cursor: pointer"></span><span style="clear: both"></span></li>
           </ul>
         </li>
         <li><a href="#" class="hotTopics"><span class="glyphicon glyphicon-fire" style="color: darkred"></span> Hot Topics</a></li>
