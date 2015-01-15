@@ -16,6 +16,11 @@
 <!-- Latest compiled and minified JavaScript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 <style>
+
+body{
+	overflow: hidden ;
+}
+
 .glyphicon-refresh-animate {
     -animation: spin .7s infinite linear;
     -webkit-animation: spin2 .7s infinite linear;
@@ -114,6 +119,29 @@
   }
 }
 
+#statsLabel{
+-moz-transform: rotate(270deg);
+  -moz-transform-origin: 50% 50%;
+  -webkit-transform: rotate(270deg);
+  -webkit-transform-origin: left top 0 ;
+  margin-top: 90px ;
+  float: left ;
+}
+
+#statsLabel:hover{
+	color: blue ;
+	cursor: pointer ;
+}
+
+#statsContent{
+	float: left ;
+	margin-left: 10px ;
+	margin-top: 12px ;
+}
+
+#tweetsFound{
+	cursor: pointer ;
+}
 
 </style>
 
@@ -128,6 +156,17 @@ currentLocation = null ;
 mediaType = null ;
 
 $( document ).ready(function() {
+	
+	$('#tweetFoundButton').click(function(){
+		if(!$('#statsContainer').hasClass('opened')){
+			$('#statsContainer').slideDown().addClass('opened') ;
+			$('#tweetFoundButton span:eq(1)').removeClass('glyphicon-plus').addClass('glyphicon-minus') ;
+		} else{
+			$('#statsContainer').slideUp().removeClass('opened') ;
+			$('#tweetFoundButton span:eq(1)').removeClass('glyphicon-minus').addClass('glyphicon-plus') ;
+		}
+		
+	}) ;
 	
 	$('.videos').click(function(){
 		mediaType = 'video' ;
@@ -249,6 +288,7 @@ $( document ).ready(function() {
 		$("#searchField").animate({'width': '-=100px'}, 500);
 		$("#searchField").removeClass("expanded") ;
 	}) ;
+	
 	
 	$(window).keydown(function(event){
 	    if(event.keyCode == 13) {
@@ -383,7 +423,7 @@ function initialize(center1) {
   geoTweets = [] ;
   newTweets = [] ;
   $('#tweetsLoadedCount').html(0) ;
-  $('#tweetsFound').html("Tweets found") ;
+  $('#tweetsFound').html('<span class="glyphicon glyphicon-plus"></span> Tweets found') ;
   var center = new google.maps.LatLng(48.20732, 16.373792) ;
     
   console.log("center: " + center1) ;
@@ -580,7 +620,7 @@ function addMarker(map, geotweet, markerClass, shape, i){
 	  
   });
 	markersAdded++ ;
-	$('#tweetsFound').html("Tweets found") ;
+	$('#tweetsFound').html('<span class="glyphicon glyphicon-plus"></span> Tweets found') ;
 	$('#tweetsLoadedCount').html(markersAdded) ;
 	  }, i * 100);
 }
@@ -625,8 +665,11 @@ google.maps.event.addDomListener(window, 'load', initialize);
           <input type="text" id="searchField" class="form-control" placeholder="Find Locations or Topics, e.g. Vienna or #asdf " style="width: 280px">
         </div>
         <button type="button" class="btn btn-default" id="search">Go!</button>
-        <button class="btn btn-info" type="button" disabled>
-		  <span id="tweetsFound">Tweets found</span> <span class="badge" id="tweetsLoadedCount">4</span>
+        <button class="btn btn-info" type="button" id="tweetFoundButton">
+		  <span id="tweetsFound"><span class="glyphicon glyphicon-plus"></span> Tweets found</span> <span class="badge" id="tweetsLoadedCount">4</span>
+		<div id="statsContainer" style="margin-top: 20px; width: 300px; height: 100px; background-color: white; opacity: 0.8; position: absolute; border-radius: 5px; padding: 10px; z-index: 10; margin-left: -13px; display: none">
+		asdasd
+		</div>
 		</button>
         
       </form>
@@ -669,7 +712,6 @@ Password:
 }(document, "script", "twitter-wjs"));</script>
 
 <div id="trendContainer" style="position:absolute;left: 40px; top: 60px;display:none;">
-
 </div>
 </body>
 </html>
