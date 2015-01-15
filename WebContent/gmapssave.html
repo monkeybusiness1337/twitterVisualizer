@@ -129,28 +129,37 @@ mediaType = null ;
 
 $( document ).ready(function() {
 	
+	$('ul.dropdown-menu li a').click(function(){
+		console.log("activating mediatweets in menu") ;
+		$('#filterTweetsButton').addClass('active') ;
+	}) ;
+	
 	$('.videos').click(function(){
 		mediaType = 'video' ;
 		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-video" style="color: orange"></span>') ;
 		$('#videoSelected').show() ;
+		$('#filterTweetsButton').addClass('active') ;
 	}) ;
 	
 	$('.photos').click(function(){
 		mediaType = 'photo' ;
 		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-camera" style="color: orange"></span>') ;
 		$('#photoSelected').show() ;
+		$('#filterTweetsButton').addClass('active') ;
 	}) ;
 	
 	$('.weblinks').click(function(){
 		mediaType = 'weblink' ;
 		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-link" style="color: orange"></span>') ;
 		$('#weblinkSelected').show() ;
+		$('#filterTweetsButton').addClass('active') ;
 	}) ;
 	
 	$('.music').click(function(){
 		mediaType = 'music' ;
 		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-music" style="color: orange"></span>') ;
 		$('#musicSelected').show() ;
+		$('#filterTweetsButton').addClass('active') ;
 	}) ;
 	
 	$('#videoSelected').click(function(){
@@ -158,6 +167,8 @@ $( document ).ready(function() {
 		$('#selectedMediaType').html('') ;
 		mediaType = null ;
 		initialize() ;
+		$('#filterTweetsButton').removeClass('active') ;
+		$('#allTweetsButton').addClass('active') ;
 	}) ;
 	
 	$('#photoSelected').click(function(){
@@ -165,6 +176,8 @@ $( document ).ready(function() {
 		$('#selectedMediaType').html('') ;
 		mediaType = null ;
 		initialize() ;
+		$('#filterTweetsButton').removeClass('active') ;
+		$('#allTweetsButton').addClass('active') ;
 	}) ;
 	
 	$('#weblinkSelected').click(function(){
@@ -172,6 +185,8 @@ $( document ).ready(function() {
 		$('#selectedMediaType').html('') ;
 		mediaType = null ;
 		initialize() ;
+		$('#filterTweetsButton').removeClass('active') ;
+		$('#allTweetsButton').addClass('active') ;
 	}) ;
 	
 	$('#musicSelected').click(function(){
@@ -179,6 +194,8 @@ $( document ).ready(function() {
 		$('#selectedMediaType').html('') ;
 		mediaType = null ;
 		initialize() ;
+		$('#filterTweetsButton').removeClass('active') ;
+		$('#allTweetsButton').addClass('active') ;
 	}) ;
 	
 	$('#welcomeMessageContainer').fadeIn("slow") ;
@@ -271,7 +288,8 @@ $( document ).ready(function() {
 	}) ;
 	
 	$('.navbar ul li a').click(function(){
-		$('.navbar ul li').removeClass("active") ;
+		if(!$(this).hasClass('filter'))
+			$('.navbar ul li').removeClass("active") ;
 		$(this).parent().addClass("active") ;
 		if($(this).attr("class") == "hotTopics"){
 			$.getJSON("TweetServlet?getTrends", function( data ) {
@@ -607,15 +625,15 @@ google.maps.event.addDomListener(window, 'load', initialize);
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
-        <li class="active"><a href="#" class="allTweets"><span class="glyphicon glyphicon-asterisk" style="color: green"></span> All Tweets</a></li>
+        <li class="active" id="allTweetsButton"><a href="#" class="allTweets"><span class="glyphicon glyphicon-asterisk" style="color: green"></span> All Tweets</a></li>
         
-        <li class="dropdown">
+        <li class="dropdown filterTweets" id="filterTweetsButton">
           <a href="#" class="dropdown-toggle mediaTweets" data-toggle="dropdown"><span class="glyphicon glyphicon-eye-open" style="color: blue"></span> Media Tweets<span id="selectedMediaType"></span> <span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
-            <li><a href="#" class="photos" style="float: left"><span class="glyphicon glyphicon-camera"></span> Photos</a> <span id="photoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
-            <li><a href="#" class="videos" style="float: left"><span class="glyphicon glyphicon-facetime-video"></span> Videos</a> <span id="videoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
-            <li><a href="#" class="music" style="float: left"><span class="glyphicon glyphicon-music"></span> Music</a> <span id="musicSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
-            <li><a href="#" class="weblinks" style="float: left"><span class="glyphicon glyphicon-link"></span> Webpage</a> <span id="linkSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li><a href="#" class="photos filter" style="float: left"><span class="glyphicon glyphicon-camera"></span> Photos</a> <span id="photoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li><a href="#" class="videos filter" style="float: left"><span class="glyphicon glyphicon-facetime-video"></span> Videos</a> <span id="videoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li><a href="#" class="music filter" style="float: left"><span class="glyphicon glyphicon-music"></span> Music</a> <span id="musicSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li><a href="#" class="weblinks filter" style="float: left"><span class="glyphicon glyphicon-link"></span> Webpage</a> <span id="linkSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
           </ul>
         </li>
         <li><a href="#" class="hotTopics"><span class="glyphicon glyphicon-fire" style="color: darkred"></span> Hot Topics</a></li>
