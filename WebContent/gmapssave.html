@@ -16,6 +16,11 @@
 <!-- Latest compiled and minified JavaScript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
 <style>
+
+body{
+	overflow: hidden ;
+}
+
 .glyphicon-refresh-animate {
     -animation: spin .7s infinite linear;
     -webkit-animation: spin2 .7s infinite linear;
@@ -76,9 +81,9 @@
 
 @-webkit-keyframes pulse {
  40% {
-    -webkit-transform: scale(1.3);
-    -moz-transform: scale(1.3);
-    transform: scale(1.3);
+    -webkit-transform: scale(1.2);
+    -moz-transform: scale(1.2);
+    transform: scale(1.2);
   }
 
   100% {
@@ -89,9 +94,9 @@
 }
 @-moz-keyframes pulse {
  40% {
-    -webkit-transform: scale(1.3);
-    -moz-transform: scale(1.3);
-    transform: scale(1.3);
+    -webkit-transform: scale(1.2);
+    -moz-transform: scale(1.2);
+    transform: scale(1.2);
   }
 
   100% {
@@ -102,18 +107,54 @@
 }
 @keyframes pulse {
   40% {
-    -webkit-transform: scale(1.3);
-    -moz-transform: scale(1.3);
-    transform: scale(1.3);
+    -webkit-transform: scale(1.2);
+    -moz-transform: scale(1.2);
+    transform: scale(1.2);
   }
 
   100% {
-    -webkit-transform: scale(1.3);
-    -moz-transform: scale(1.3);
-    transform: scale(1.3);
+    -webkit-transform: scale(1.2);
+    -moz-transform: scale(1.2);
+    transform: scale(1.2);
   }
 }
 
+#statsLabel{
+-moz-transform: rotate(270deg);
+  -moz-transform-origin: 50% 50%;
+  -webkit-transform: rotate(270deg);
+  -webkit-transform-origin: left top 0 ;
+  margin-top: 90px ;
+  float: left ;
+}
+
+#statsLabel:hover{
+	color: blue ;
+	cursor: pointer ;
+}
+
+#statsContent{
+	float: left ;
+	margin-left: 10px ;
+	margin-top: 12px ;
+}
+
+#tweetsFound{
+	cursor: pointer ;
+}
+
+#statsContainer table{
+	width: 280px ;
+}
+
+#statsContainer tr {
+	border-bottom: 1px solid lightgray ;
+}
+
+#statsContainer tr td{
+	padding-bottom: 5px ;
+	padding-top: 5px ;
+}
 
 </style>
 
@@ -132,6 +173,16 @@ $( document ).ready(function() {
 	$('ul.dropdown-menu li a').click(function(){
 		console.log("activating mediatweets in menu") ;
 		$('#filterTweetsButton').addClass('active') ;
+	}) ;
+	
+	$('#tweetFoundButton').click(function(){
+		if(!$('#statsContainer').hasClass('opened')){
+			$('#statsContainer').slideDown().addClass('opened') ;
+			$('#tweetFoundButton span:eq(1)').removeClass('glyphicon-plus').addClass('glyphicon-minus') ;
+		} else{
+			$('#statsContainer').slideUp().removeClass('opened') ;
+			$('#tweetFoundButton span:eq(1)').removeClass('glyphicon-minus').addClass('glyphicon-plus') ;
+		}
 	}) ;
 	
 	$('.videos').click(function(){
@@ -256,16 +307,17 @@ $( document ).ready(function() {
 	}) ;
 	
 	$('#searchField').click(function(){
-		if(!$('#searchField').hasClass("expanded")){
+		/*if(!$('#searchField').hasClass("expanded")){
 			$("#searchField").animate({'width': '+=100px'}, 500);
 			$("#searchField").addClass("expanded") ;
-		}
+		}*/
 	}) ;
 	
 	$('#searchField').focusout(function(){
-		$("#searchField").animate({'width': '-=100px'}, 500);
-		$("#searchField").removeClass("expanded") ;
+		/*$("#searchField").animate({'width': '-=100px'}, 500);
+		$("#searchField").removeClass("expanded") ;*/
 	}) ;
+	
 	
 	$(window).keydown(function(event){
 	    if(event.keyCode == 13) {
@@ -400,8 +452,16 @@ function initialize(center1) {
   markersAdded = 0 ;
   geoTweets = [] ;
   newTweets = [] ;
+  statTextTweets = 0 ;
+  statPhotoTweets = 0 ;
+  statVideoTweets = 0 ;
+  statMusicTweets = 0 ;
+  statLinkTweets = 0 ;
+  
+  $('#textTweetStatCount,#linkTweetStatCount,#videoTweetStatCount,#musicTweetStatCount,#photoTweetStatCount').html(0) ;
+  
   $('#tweetsLoadedCount').html(0) ;
-  $('#tweetsFound').html("Tweets found") ;
+  $('#tweetsFound').html('<span class="glyphicon glyphicon-plus"></span> Tweets found') ;
   var center = new google.maps.LatLng(48.20732, 16.373792) ;
     
   console.log("center: " + center1) ;
@@ -440,6 +500,7 @@ function initialize(center1) {
   google.maps.event.addListener(map, 'idle', function() {
     console.log("zoom: " + map.getZoom() ) ;
   
+    	$('#statsContainer').slideUp() ;
 	    // 3 seconds after the center of the map has changed
 	    $('#tweetsFound').html("Loading") ;
 	    $('#tweetsLoadedCount').html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>') ;
@@ -508,7 +569,11 @@ function reloatTweets(filterMediaType){
 function filterMarkers(mediaType){
 	
 }
-
+statTextTweets = 0 ;
+statPhotoTweets = 0 ;
+statVideoTweets = 0 ;
+statMusicTweets = 0 ;
+statLinkTweets = 0 ;
 function setMarkers(map, geotweet) {
   
   var shape = {
@@ -519,19 +584,35 @@ function setMarkers(map, geotweet) {
   for ( var i = 0 ; i < geotweet.length ; i++ ) {
 	  
 	  // set the right marker depending on mediatype
-	  if(jQuery.isEmptyObject(geotweet[i].media)){
-		  markerClass = "linkMarker" ;
-	  } else if(geotweet[i].media.photo != "undefined"){
-		  markerClass = "photoMarker" ;
-	  } else if(geotweet[i].media.video != "undefined"){
+	  if(geotweet[i].isVideoTweet){
 		  markerClass = "videoMarker" ;
-	  } else if(geotweet[i].media.audio != "undefinded"){
+		  statVideoTweets++ ;
+		  $('#videoTweetStatCount').html(statVideoTweets) ;
+	  }
+	  else if(jQuery.isEmptyObject(geotweet[i].media) && !geotweet[i].isLinkTweet && !geotweet[i].isPhotoLinked && !geotweet[i].isVideoTweet){
+		  markerClass = "linkMarker" ;
+		  statTextTweets++ ;
+		  $('#textTweetStatCount').html(statTextTweets) ;
+	  }else if(jQuery.isEmptyObject(geotweet[i].media) && geotweet[i].isLinkTweet){
+		  markerClass = "linkMarker" ;
+		  statLinkTweets++ ;
+		  $('#linkTweetStatCount').html(statLinkTweets) ;
+	  } else if(geotweet[i].media.photo != "undefined" || geotweet[i].isPhotoLinked){
+		  markerClass = "photoMarker" ;
+		  statPhotoTweets++ ;
+		  $('#photoTweetStatCount').html(statPhotoTweets) ;
+	  }  else if(geotweet[i].media.audio != "undefinded"){
 		  markerClass = "musicMarker" ;
+		  statMusicTweets++ ;
+		  $('#musicTweetStatCount').html(statMusicTweets) ;
 	  }
   
  
 	  addMarker(map,geotweet[i], markerClass, shape, i) ;
   }
+  if(geotweet.length != 0)
+ 	 setTimeout(function(){ $('#statsContainer').slideDown() ;}, geotweet.length*100) ;
+  
 }
 
 function addMarker(map, geotweet, markerClass, shape, i){
@@ -598,7 +679,7 @@ function addMarker(map, geotweet, markerClass, shape, i){
 	  
   });
 	markersAdded++ ;
-	$('#tweetsFound').html("Tweets found") ;
+	$('#tweetsFound').html('<span class="glyphicon glyphicon-plus"></span> Tweets found') ;
 	$('#tweetsLoadedCount').html(markersAdded) ;
 	  }, i * 100);
 }
@@ -630,21 +711,38 @@ google.maps.event.addDomListener(window, 'load', initialize);
         <li class="dropdown filterTweets" id="filterTweetsButton">
           <a href="#" class="dropdown-toggle mediaTweets" data-toggle="dropdown"><span class="glyphicon glyphicon-eye-open" style="color: blue"></span> Media Tweets<span id="selectedMediaType"></span> <span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
+
             <li><a href="#" class="photos filter" style="float: left"><span class="glyphicon glyphicon-camera"></span> Photos</a> <span id="photoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
             <li><a href="#" class="videos filter" style="float: left"><span class="glyphicon glyphicon-facetime-video"></span> Videos</a> <span id="videoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
-            <li><a href="#" class="music filter" style="float: left"><span class="glyphicon glyphicon-music"></span> Music</a> <span id="musicSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li style="display: none"><a href="#" class="music filter" style="float: left"><span class="glyphicon glyphicon-music"></span> Music</a> <span id="musicSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
             <li><a href="#" class="weblinks filter" style="float: left"><span class="glyphicon glyphicon-link"></span> Webpage</a> <span id="linkSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+<!-- 
+            <li><a href="#" class="photos" style="float: left"><span class="glyphicon glyphicon-camera"></span> Photos</a> <span id="photoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li><a href="#" class="videos" style="float: left"><span class="glyphicon glyphicon-facetime-video"></span> Videos</a> <span id="videoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li style="display: none"><a href="#" class="music" style="float: left"><span class="glyphicon glyphicon-music"></span> Music</a> <span id="musicSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li><a href="#" class="weblinks" style="float: left"><span class="glyphicon glyphicon-link"></span> Webpage</a> <span id="linkSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+ -->
           </ul>
         </li>
         <li><a href="#" class="hotTopics"><span class="glyphicon glyphicon-fire" style="color: darkred"></span> Hot Topics</a></li>
       </ul>
       <form class="navbar-form navbar-left" role="search">
         <div class="form-group">
-          <input type="text" id="searchField" class="form-control" placeholder="Find Locations or Topics, e.g. Vienna or #asdf " style="width: 280px">
+          <input type="text" id="searchField" class="form-control" placeholder="Find Locations or Topics, e.g. Vienna or #asdf " style="width: 380px">
         </div>
         <button type="button" class="btn btn-default" id="search">Go!</button>
-        <button class="btn btn-info" type="button" disabled>
-		  <span id="tweetsFound">Tweets found</span> <span class="badge" id="tweetsLoadedCount">4</span>
+        <button class="btn btn-info" type="button" id="tweetFoundButton" data-toggle="tooltip" data-placement="left" title="Click to get Tweet Statistics">
+		  <span id="tweetsFound"><span class="glyphicon glyphicon-plus"></span> Tweets found</span> <span class="badge" id="tweetsLoadedCount">4</span>
+		<div id="statsContainer" style="cursor: initial; text-align: left; color: #777; text-shadow: none; margin-top: 20px; width: 300px; height: 165px; background-color: white; opacity: 0.8; position: absolute; border-radius: 5px; padding: 10px; z-index: 10; margin-left: -13px; display: none">
+		<span style="text-align:left"><b>Statistics</b></span><hr style="margin-top: 5px; margin-bottom: 5px; border-color: lightgray"/>
+		<table>
+		<tr><td><span class="glyphicon glyphicon-align-justify"></span> Text Tweets</td><td id="textTweetStatCount" style="text-align:right">0</td></tr>
+		<tr><td><span class="glyphicon glyphicon-camera"></span> Photo Tweets</td><td id="photoTweetStatCount" style="text-align:right">0</td></tr>
+		<tr><td><span class="glyphicon glyphicon-link"></span> Webpage Tweets</td><td id="linkTweetStatCount" style="text-align:right">0</td></tr>
+		<tr style="border-bottom: none"><td><span class="glyphicon glyphicon-facetime-video"></span> Video Tweets</td><td id="videoTweetStatCount" style="text-align:right">0</td></tr>
+		<tr style="display: none"><td><span class="glyphicon glyphicon-music"></span> Music Tweets</td><td id="musicTweetStatCount" style="text-align:right">0</td></tr>
+		</table>
+		</div>
 		</button>
         
       </form>
@@ -687,7 +785,6 @@ Password:
 }(document, "script", "twitter-wjs"));</script>
 
 <div id="trendContainer" style="position:absolute;left: 40px; top: 60px;display:none;">
-
 </div>
 </body>
 </html>
