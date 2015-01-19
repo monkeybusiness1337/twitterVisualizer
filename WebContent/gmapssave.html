@@ -435,10 +435,11 @@ function initialize(center1) {
   markersAdded = 0 ;
   geoTweets = [] ;
   newTweets = [] ;
-  statLinkTweets = 0 ;
+  statTextTweets = 0 ;
   statPhotoTweets = 0 ;
   statVideoTweets = 0 ;
   statMusicTweets = 0 ;
+  statLinkTweets = 0 ;
   
   $('#textTweetStatCount,#linkTweetStatCount,#videoTweetStatCount,#musicTweetStatCount,#photoTweetStatCount').html(0) ;
   
@@ -551,10 +552,11 @@ function reloatTweets(filterMediaType){
 function filterMarkers(mediaType){
 	
 }
-statLinkTweets = 0 ;
+statTextTweets = 0 ;
 statPhotoTweets = 0 ;
 statVideoTweets = 0 ;
 statMusicTweets = 0 ;
+statLinkTweets = 0 ;
 function setMarkers(map, geotweet) {
   
   var shape = {
@@ -565,19 +567,24 @@ function setMarkers(map, geotweet) {
   for ( var i = 0 ; i < geotweet.length ; i++ ) {
 	  
 	  // set the right marker depending on mediatype
-	  if(jQuery.isEmptyObject(geotweet[i].media)){
-		  markerClass = "linkMarker" ;
-		  statLinkTweets++ ;
-		  $('#textTweetStatCount').html(statLinkTweets) ;
-	  } else if(geotweet[i].media.photo != "undefined"){
-		  markerClass = "photoMarker" ;
-		  statPhotoTweets++ ;
-		  $('#photoTweetStatCount').html(statPhotoTweets) ;
-	  } else if(geotweet[i].media.video != "undefined"){
+	  if(geotweet[i].isVideoTweet){
 		  markerClass = "videoMarker" ;
 		  statVideoTweets++ ;
 		  $('#videoTweetStatCount').html(statVideoTweets) ;
-	  } else if(geotweet[i].media.audio != "undefinded"){
+	  }
+	  else if(jQuery.isEmptyObject(geotweet[i].media) && !geotweet[i].isLinkTweet && !geotweet[i].isPhotoLinked && !geotweet[i].isVideoTweet){
+		  markerClass = "linkMarker" ;
+		  statTextTweets++ ;
+		  $('#textTweetStatCount').html(statTextTweets) ;
+	  }else if(jQuery.isEmptyObject(geotweet[i].media) && geotweet[i].isLinkTweet){
+		  markerClass = "linkMarker" ;
+		  statLinkTweets++ ;
+		  $('#linkTweetStatCount').html(statLinkTweets) ;
+	  } else if(geotweet[i].media.photo != "undefined" || geotweet[i].isPhotoLinked){
+		  markerClass = "photoMarker" ;
+		  statPhotoTweets++ ;
+		  $('#photoTweetStatCount').html(statPhotoTweets) ;
+	  }  else if(geotweet[i].media.audio != "undefinded"){
 		  markerClass = "musicMarker" ;
 		  statMusicTweets++ ;
 		  $('#musicTweetStatCount').html(statMusicTweets) ;
@@ -689,7 +696,7 @@ google.maps.event.addDomListener(window, 'load', initialize);
           <ul class="dropdown-menu" role="menu">
             <li><a href="#" class="photos" style="float: left"><span class="glyphicon glyphicon-camera"></span> Photos</a> <span id="photoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
             <li><a href="#" class="videos" style="float: left"><span class="glyphicon glyphicon-facetime-video"></span> Videos</a> <span id="videoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
-            <li><a href="#" class="music" style="float: left"><span class="glyphicon glyphicon-music"></span> Music</a> <span id="musicSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li style="display: none"><a href="#" class="music" style="float: left"><span class="glyphicon glyphicon-music"></span> Music</a> <span id="musicSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
             <li><a href="#" class="weblinks" style="float: left"><span class="glyphicon glyphicon-link"></span> Webpage</a> <span id="linkSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
           </ul>
         </li>
@@ -702,14 +709,14 @@ google.maps.event.addDomListener(window, 'load', initialize);
         <button type="button" class="btn btn-default" id="search">Go!</button>
         <button class="btn btn-info" type="button" id="tweetFoundButton" data-toggle="tooltip" data-placement="left" title="Click to get Tweet Statistics">
 		  <span id="tweetsFound"><span class="glyphicon glyphicon-plus"></span> Tweets found</span> <span class="badge" id="tweetsLoadedCount">4</span>
-		<div id="statsContainer" style="cursor: initial; text-align: left; color: #777; text-shadow: none; margin-top: 20px; width: 300px; height: 200px; background-color: white; opacity: 0.8; position: absolute; border-radius: 5px; padding: 10px; z-index: 10; margin-left: -13px; display: none">
+		<div id="statsContainer" style="cursor: initial; text-align: left; color: #777; text-shadow: none; margin-top: 20px; width: 300px; height: 165px; background-color: white; opacity: 0.8; position: absolute; border-radius: 5px; padding: 10px; z-index: 10; margin-left: -13px; display: none">
 		<span style="text-align:left"><b>Statistics</b></span><hr style="margin-top: 5px; margin-bottom: 5px; border-color: lightgray"/>
 		<table>
 		<tr><td><span class="glyphicon glyphicon-align-justify"></span> Text Tweets</td><td id="textTweetStatCount" style="text-align:right">0</td></tr>
 		<tr><td><span class="glyphicon glyphicon-camera"></span> Photo Tweets</td><td id="photoTweetStatCount" style="text-align:right">0</td></tr>
 		<tr><td><span class="glyphicon glyphicon-link"></span> Webpage Tweets</td><td id="linkTweetStatCount" style="text-align:right">0</td></tr>
-		<tr><td><span class="glyphicon glyphicon-facetime-video"></span> Video Tweets</td><td id="videoTweetStatCount" style="text-align:right">0</td></tr>
-		<tr style="border-bottom: none"><td><span class="glyphicon glyphicon-music"></span> Music Tweets</td><td id="musicTweetStatCount" style="text-align:right">0</td></tr>
+		<tr style="border-bottom: none"><td><span class="glyphicon glyphicon-facetime-video"></span> Video Tweets</td><td id="videoTweetStatCount" style="text-align:right">0</td></tr>
+		<tr style="display: none"><td><span class="glyphicon glyphicon-music"></span> Music Tweets</td><td id="musicTweetStatCount" style="text-align:right">0</td></tr>
 		</table>
 		</div>
 		</button>

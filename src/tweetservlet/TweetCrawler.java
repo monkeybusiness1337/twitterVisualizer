@@ -21,6 +21,7 @@ import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
 import twitter4j.Query.Unit;
+import twitter4j.URLEntity;
 import twitter4j.conf.ConfigurationBuilder;
 
 
@@ -36,6 +37,9 @@ public class TweetCrawler {
 		String tweets = ts.getTweets(new Location(48.20732f,16.373792f), null, "photo", false) ;
 		System.out.print(tweets) ;
 		//ts.getTrends();
+		System.out.println("\n\nCOMPARISON TEST\n\n") ;
+		String expandedUrl = "youtube.com" ;
+		System.out.println("expanded url contains: " + (expandedUrl.contains("youtube") ? "yep" : "nope")) ;
 	}
 	
 	public TweetCrawler(){
@@ -139,13 +143,50 @@ public class TweetCrawler {
 	
 	public JSONObject getJSONGeoTweet(Status tweet) throws JSONException, UnsupportedEncodingException, NoSuchAlgorithmException {
 		JSONObject obj = new JSONObject() ;
-				
+		
 		obj.put("id", tweet.getId()) ;
 		obj.put("user", tweet.getUser().getScreenName()) ;
 		obj.put("latitude", tweet.getGeoLocation().getLatitude()) ;
 		obj.put("longitude", tweet.getGeoLocation().getLongitude()) ;
 		obj.put("favCount", tweet.getFavoriteCount()) ;
-		obj.put("content", this.parse(tweet.getText())) ;
+		String parsedTweet = this.parse(tweet.getText()) ;
+		obj.put("content", parsedTweet) ;
+		
+		boolean isLinkTweet = false ;
+		
+		if(parsedTweet.contains("<a href="))
+			isLinkTweet = true ;
+		
+
+		boolean isVideoTweet = false ;
+		boolean isPhotoLinked = false ;
+		obj.put("urlEntities", tweet.getURLEntities().length) ;
+		
+		if(tweet.getURLEntities().length > 0){
+			String expandedUrl = tweet.getURLEntities()[0].getExpandedURL() ;
+			if(expandedUrl.contains("youtube") ||
+					expandedUrl.contains("y2u.be") ||
+					expandedUrl.contains("vimeo") || 
+					expandedUrl.contains("youtu.be")){
+						isVideoTweet = true ;
+						isLinkTweet = false ;
+			} else if(expandedUrl.contains("instagram")){
+				isPhotoLinked = true ;
+				isLinkTweet = false ;
+			}
+			obj.put("expandedUrl", expandedUrl) ;
+		}
+			
+		
+		
+		obj.put("isPhotoLinked", isPhotoLinked) ;
+		obj.put("isVideoTweet", isVideoTweet) ;
+		obj.put("isLinkTweet", isLinkTweet) ;
+
+		
+		
+		
+		
 		
 		ArrayList<MediaEntity> me = new ArrayList<MediaEntity>(Arrays.asList(tweet.getMediaEntities()));
 		HashMap<String,String> media = new HashMap<String,String>() ;
@@ -189,6 +230,13 @@ public class TweetCrawler {
 	     // Search for URLs
 	     if (tweetText.contains("http:")) {
 	         int indexOfHttp = tweetText.indexOf("http:") ;
+	         int endPoint = (tweetText.indexOf(' ', indexOfHttp) != -1) ? tweetText.indexOf(' ', indexOfHttp) : tweetText.length() ;
+	         String url = tweetText.substring(indexOfHttp, endPoint) ;
+	         String targetUrlHtml=  "<a href='"+url+"' target='_blank'>"+url+"</a>" ;
+	         tweetText = tweetText.replace(url,targetUrlHtml) ;
+	     }
+	     if(tweetText.contains("https:")){
+	    	 int indexOfHttp = tweetText.indexOf("https:") ;
 	         int endPoint = (tweetText.indexOf(' ', indexOfHttp) != -1) ? tweetText.indexOf(' ', indexOfHttp) : tweetText.length() ;
 	         String url = tweetText.substring(indexOfHttp, endPoint) ;
 	         String targetUrlHtml=  "<a href='"+url+"' target='_blank'>"+url+"</a>" ;
