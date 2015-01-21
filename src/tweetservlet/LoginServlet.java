@@ -35,6 +35,7 @@ public class LoginServlet extends HttpServlet implements Servlet{
 			requestToken = twitter.getOAuthRequestToken(callbackURL.toString());
 			String authURL = requestToken.getAuthenticationURL();
 			request.getSession().setAttribute("requestToken", requestToken);
+			request.getSession().setAttribute("checkLogin", "true");
 			response.sendRedirect(authURL);
 			
 			

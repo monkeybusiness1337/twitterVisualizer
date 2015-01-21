@@ -31,18 +31,22 @@ public class TweetServlet extends HttpServlet implements Servlet {
 		double latitude = Double.parseDouble(request.getParameter("lat")) ;
 		PrintWriter pw = response.getWriter() ;
 		String tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), "asd", MediaType.PHOTO, false) ;
-		HttpSession session = request.getSession(false);
-		boolean checkInit = false;
-		if (session != null && checkInit == false) {
+		HttpSession session = request.getSession(true);
+		
+		String checkLogin = (String) session.getAttribute("checkLogin");
+		
+		if (session != null && checkLogin == "true") {
 			String accessToken =(String) session.getAttribute("accessToken");
 			String accessTokenSecret = (String) session.getAttribute("accessTokenSecret");
 			this.tweetCrawler.init(accessToken, accessTokenSecret);
 			tweets = this.tweetCrawler.getPrivateTweets(new Location(latitude,longitude), "asd", MediaType.PHOTO, false);
-			checkInit = true;
+			
+			//session.setAttribute("checkinit", checkInit);
 		} else {
 			this.tweetCrawler.init();
 			tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), "asd", MediaType.PHOTO, false) ;
-			checkInit = true;
+			
+			//session.setAttribute("checkinit", checkInit);
 		}
 		pw.print(tweets) ;
 		pw.flush() ;

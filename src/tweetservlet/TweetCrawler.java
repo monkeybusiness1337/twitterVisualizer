@@ -13,13 +13,14 @@ import twitter4j.GeoLocation;
 import twitter4j.JSONException;
 import twitter4j.JSONObject;
 import twitter4j.MediaEntity;
+import twitter4j.Paging;
 import twitter4j.Query;
+import twitter4j.Query.Unit;
 import twitter4j.QueryResult;
 import twitter4j.Status;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
-import twitter4j.Query.Unit;
 import twitter4j.conf.ConfigurationBuilder;
 public class TweetCrawler {
 	public static double RADIUS = 10.0f ;
@@ -30,8 +31,10 @@ public class TweetCrawler {
 	// Test
 	public static void main(String args[]){
 		TweetCrawler ts = new TweetCrawler() ;
-		String tweets = ts.getTweets(new Location(48.20732f,16.373792f), "asd", MediaType.PHOTO, false) ;
-		System.out.print(tweets) ;
+		//String tweets = ts.getTweets(new Location(48.20732f,16.373792f), "asd", MediaType.PHOTO, false) ;
+		String ptweets = ts.getPrivateTweets(new Location(48.20732f,16.373792f), "asd", MediaType.PHOTO, false);
+		System.out.print(ptweets) ;
+		
 	}
 	
 	public TweetCrawler(){
@@ -77,13 +80,32 @@ public class TweetCrawler {
 	}
 	
 	public String getPrivateTweets(Location gps, String topic, MediaType mediaType, boolean isHotTopic) {
+		Query query = new Query("");
+		GeoLocation location = new GeoLocation(gps.getLatitude(),gps.getLongitude());
+		query.setGeoCode(location, RADIUS, LENGTHUNIT);
+		QueryResult result;
 		ArrayList<JSONObject> tweetResults = new ArrayList<JSONObject>();
 		JSONObject jsonResult = new JSONObject();
+		Paging paging = new Paging();
+		paging.setCount(800);
 		try {
-			List<Status> tweets = this.twitter.getHomeTimeline();
+			List<Status> tweets = this.twitter.getHomeTimeline(paging);
+			//result = this.twitter.search(query);
+			//List<Status> queryTweets = result.getTweets();
+			
 
 			for (Status tweet : tweets) {
-				tweetResults.add(getJSONGeoTweet(tweet)) ;
+				
+				//for (Status queryTweet : queryTweets) {
+					//if (queryTweet.getId() == tweet.getId()) {
+					if (tweet.getGeoLocation() != null) {
+						System.out.println(tweet.getId() );
+						tweetResults.add(getJSONGeoTweet(tweet)) ;
+					}
+					//}
+				//}
+				
+				
 			}
 
 			
