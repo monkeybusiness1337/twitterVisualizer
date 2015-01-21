@@ -1,6 +1,6 @@
 package tweetservlet;
+
 import java.io.UnsupportedEncodingException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,10 +18,16 @@ import twitter4j.Query;
 import twitter4j.Query.Unit;
 import twitter4j.QueryResult;
 import twitter4j.Status;
+import twitter4j.Trends;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
+
+import twitter4j.Query.Unit;
+import twitter4j.URLEntity;
 import twitter4j.conf.ConfigurationBuilder;
+
+
 public class TweetCrawler {
 	public static double RADIUS = 10.0f ;
 	public static Unit LENGTHUNIT = Query.KILOMETERS ;
@@ -31,10 +37,14 @@ public class TweetCrawler {
 	// Test
 	public static void main(String args[]){
 		TweetCrawler ts = new TweetCrawler() ;
-		//String tweets = ts.getTweets(new Location(48.20732f,16.373792f), "asd", MediaType.PHOTO, false) ;
-		String ptweets = ts.getPrivateTweets(new Location(48.20732f,16.373792f), "asd", MediaType.PHOTO, false);
-		System.out.print(ptweets) ;
-		
+
+
+		String tweets = ts.getTweets(new Location(48.20732f,16.373792f), null, "photo", false) ;
+		System.out.print(tweets) ;
+		//ts.getTrends();
+		System.out.println("\n\nCOMPARISON TEST\n\n") ;
+		String expandedUrl = "youtube.com" ;
+		System.out.println("expanded url contains: " + (expandedUrl.contains("youtube") ? "yep" : "nope")) ;
 	}
 	
 	public TweetCrawler(){
@@ -42,8 +52,23 @@ public class TweetCrawler {
 	}
 	
 	
-	public String getTweets(Location gps, String topic, MediaType mediaType, boolean isHotTopic) {
-		Query query = new Query("");
+	public String getTweets(Location gps, String topic, String mediaType, boolean isHotTopic) {
+		String queryString = "" ;
+		Query query = new Query();
+		if(isHotTopic){
+			ArrayList<String> trendsArray = this.getTrendsRaw() ;
+			for(int i = 0 ; i < trendsArray.size() ; i++){
+				queryString += trendsArray.get(i) ;
+				if(i != trendsArray.size()-1)
+					queryString += " OR " ;
+			}
+			queryString = "("+queryString+")" + ((topic != null) ? (" AND " + topic) : "") ;
+		} else{
+			queryString = topic != null ? topic : "" ;
+		}
+		query.setCount(100) ;
+		query.setQuery(queryString);
+		
 		GeoLocation location = new GeoLocation(gps.getLatitude(),gps.getLongitude());
 		query.setGeoCode(location, RADIUS, LENGTHUNIT);
 		QueryResult result;
@@ -51,14 +76,26 @@ public class TweetCrawler {
 		ArrayList<JSONObject> tweetResults = new ArrayList<JSONObject>() ;
 		JSONObject jsonResult = new JSONObject() ;
 		try {
-			do {
+			do {			
 				result = this.twitter.search(query);
 				List<Status> tweets = result.getTweets();
+				
+				if(tweets.size() == 0) break ;
 
 				for (Status tweet : tweets) {
-					tweetResults.add(getJSONGeoTweet(tweet)) ;
+					if(mediaType != null){
+						ArrayList<MediaEntity> mediaEntities = new ArrayList<MediaEntity>(Arrays.asList(tweet.getMediaEntities())) ;
+						for(MediaEntity mediaEntity : mediaEntities){
+							if(mediaEntity.getType().compareTo(mediaType) == 0){
+								tweetResults.add(getJSONGeoTweet(tweet)) ;
+								break ;
+							}
+						}
+					} else{
+						tweetResults.add(getJSONGeoTweet(tweet)) ;
+					}
+					
 				}
-
 			} while ((query = result.nextQuery()) != null);
 			
 			jsonResult.put("satus", "sucess") ;
@@ -79,7 +116,7 @@ public class TweetCrawler {
 		return jsonResult.toString() ;
 	}
 	
-	public String getPrivateTweets(Location gps, String topic, MediaType mediaType, boolean isHotTopic) {
+	public String getPrivateTweets(Location gps, String topic, String mediaType, boolean isHotTopic) {
 		Query query = new Query("");
 		GeoLocation location = new GeoLocation(gps.getLatitude(),gps.getLongitude());
 		query.setGeoCode(location, RADIUS, LENGTHUNIT);
@@ -125,17 +162,84 @@ public class TweetCrawler {
 			e.printStackTrace();
 		}
 		return jsonResult.toString();
+
+	}
+		public String getTrends(){
+		JSONObject obj = new JSONObject() ;
+		ArrayList<String> trendsArray = this.getTrendsRaw() ;
+		try {
+			obj.put("trends", trendsArray) ;
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return obj.toString() ;
+	}
+	
+	public ArrayList<String> getTrendsRaw(){
+		Trends trends = null ;
+		ArrayList<String> trendsArray = new ArrayList<String>() ;
+		
+		try {
+			trends = twitter.getPlaceTrends(23424750);
+			
+			for (int i = 0; i < trends.getTrends().length; i++) {
+				trendsArray.add(trends.getTrends()[i].getName());
+			}
+			
+		} catch (TwitterException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return trendsArray ;
 	}
 	
 	public JSONObject getJSONGeoTweet(Status tweet) throws JSONException, UnsupportedEncodingException, NoSuchAlgorithmException {
 		JSONObject obj = new JSONObject() ;
-				
+		
 		obj.put("id", tweet.getId()) ;
 		obj.put("user", tweet.getUser().getScreenName()) ;
 		obj.put("latitude", tweet.getGeoLocation().getLatitude()) ;
 		obj.put("longitude", tweet.getGeoLocation().getLongitude()) ;
 		obj.put("favCount", tweet.getFavoriteCount()) ;
-		obj.put("content", this.parse(tweet.getText())) ;
+		String parsedTweet = this.parse(tweet.getText()) ;
+		obj.put("content", parsedTweet) ;
+		
+		boolean isLinkTweet = false ;
+		
+		if(parsedTweet.contains("<a href="))
+			isLinkTweet = true ;
+		
+
+		boolean isVideoTweet = false ;
+		boolean isPhotoLinked = false ;
+		obj.put("urlEntities", tweet.getURLEntities().length) ;
+		
+		if(tweet.getURLEntities().length > 0){
+			String expandedUrl = tweet.getURLEntities()[0].getExpandedURL() ;
+			if(expandedUrl.contains("youtube") ||
+					expandedUrl.contains("y2u.be") ||
+					expandedUrl.contains("vimeo") || 
+					expandedUrl.contains("youtu.be")){
+						isVideoTweet = true ;
+						isLinkTweet = false ;
+			} else if(expandedUrl.contains("instagram")){
+				isPhotoLinked = true ;
+				isLinkTweet = false ;
+			}
+			obj.put("expandedUrl", expandedUrl) ;
+		}
+			
+		
+		
+		obj.put("isPhotoLinked", isPhotoLinked) ;
+		obj.put("isVideoTweet", isVideoTweet) ;
+		obj.put("isLinkTweet", isLinkTweet) ;
+
+		
+		
+		
+		
 		
 		ArrayList<MediaEntity> me = new ArrayList<MediaEntity>(Arrays.asList(tweet.getMediaEntities()));
 		HashMap<String,String> media = new HashMap<String,String>() ;
@@ -147,11 +251,6 @@ public class TweetCrawler {
 		}
 		
 		obj.put("media", media) ;
-		
-		
-		byte[] bytesOfMessage = (tweet.getUser().getScreenName()+tweet.getGeoLocation().getLatitude()+tweet.getGeoLocation().getLongitude()).getBytes("UTF-8");
-		MessageDigest md = MessageDigest.getInstance("MD5");
-		byte[] hash = md.digest(bytesOfMessage);
 		
 		obj.put("hash", tweet.getUser().getScreenName()+tweet.getGeoLocation().getLatitude()+tweet.getGeoLocation().getLongitude()) ;
 
@@ -184,6 +283,13 @@ public class TweetCrawler {
 	     // Search for URLs
 	     if (tweetText.contains("http:")) {
 	         int indexOfHttp = tweetText.indexOf("http:") ;
+	         int endPoint = (tweetText.indexOf(' ', indexOfHttp) != -1) ? tweetText.indexOf(' ', indexOfHttp) : tweetText.length() ;
+	         String url = tweetText.substring(indexOfHttp, endPoint) ;
+	         String targetUrlHtml=  "<a href='"+url+"' target='_blank'>"+url+"</a>" ;
+	         tweetText = tweetText.replace(url,targetUrlHtml) ;
+	     }
+	     if(tweetText.contains("https:")){
+	    	 int indexOfHttp = tweetText.indexOf("https:") ;
 	         int endPoint = (tweetText.indexOf(' ', indexOfHttp) != -1) ? tweetText.indexOf(' ', indexOfHttp) : tweetText.length() ;
 	         String url = tweetText.substring(indexOfHttp, endPoint) ;
 	         String targetUrlHtml=  "<a href='"+url+"' target='_blank'>"+url+"</a>" ;

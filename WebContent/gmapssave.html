@@ -5,6 +5,7 @@
 <script src="http://code.jquery.com/jquery-latest.js"></script>
 
 <script src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCkAeVbkH0v4oSDYzcAXPtO8Tn3dHGKlZs&sensor=false"></script>
+<script src="https://google-maps-utility-library-v3.googlecode.com/svn-history/r391/trunk/markerwithlabel/src/markerwithlabel.js"></script>
 
 <!-- Latest compiled and minified CSS -->
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
@@ -14,16 +15,244 @@
 
 <!-- Latest compiled and minified JavaScript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+<style>
 
+body{
+	overflow: hidden ;
+}
+
+.glyphicon-refresh-animate {
+    -animation: spin .7s infinite linear;
+    -webkit-animation: spin2 .7s infinite linear;
+}
+
+@-webkit-keyframes spin2 {
+    from { -webkit-transform: rotate(0deg);}
+    to { -webkit-transform: rotate(360deg);}
+}
+
+.videoMarker{
+	background-image: url('vidIcon.png') ;
+	height: 60px ;
+	width: 35px ;
+	background-repeat: no-repeat ;
+	margin-top: -60px !important ;
+	margin-left: -17px !important ;
+	-webkit-animation: pulse 0.7s ease 0.3s 2;
+    -moz-animation: pulse 0.7s ease 0.3s 2;
+    animation: pulse 0.7s ease 3s 2;
+}
+
+.photoMarker{
+	background-image: url('picIcon.png') ;
+	height: 60px ;
+	width: 35px ;
+	background-repeat: no-repeat ;
+	margin-top: -60px !important ;
+	margin-left: -17px !important ;
+	-webkit-animation: pulse 0.7s ease 0.3s 2;
+    -moz-animation: pulse 0.7s ease 0.3s 2;
+    animation: pulse 0.7s ease 3s 2;
+}
+
+.musicMarker{
+	background-image: url('musicIcon.png') ;
+	height: 60px ;
+	width: 35px ;
+	background-repeat: no-repeat ;
+	margin-top: -60px !important ;
+	margin-left: -17px !important ;
+	-webkit-animation: pulse 0.7s ease 0.3s 2;
+    -moz-animation: pulse 0.7s ease 0.3s 2;
+    animation: pulse 0.7s ease 3s 2;
+}
+
+.linkMarker{
+	background-image: url('linkIcon.png') ;
+	height: 60px ;
+	width: 35px ;
+	background-repeat: no-repeat ;
+	margin-top: -60px !important ;
+	margin-left: -17px !important ;
+	-webkit-animation: pulse 0.7s ease 0.3s 2;
+    -moz-animation: pulse 0.7s ease 0.3s 2;
+    animation: pulse 0.7s ease 3s 2;
+}
+
+@-webkit-keyframes pulse {
+ 40% {
+    -webkit-transform: scale(1.2);
+    -moz-transform: scale(1.2);
+    transform: scale(1.2);
+  }
+
+  100% {
+    -webkit-transform: scale(1);
+    -moz-transform: scale(1);
+    transform: scale(1);
+  }
+}
+@-moz-keyframes pulse {
+ 40% {
+    -webkit-transform: scale(1.2);
+    -moz-transform: scale(1.2);
+    transform: scale(1.2);
+  }
+
+  100% {
+    -webkit-transform: scale(1);
+    -moz-transform: scale(1);
+    transform: scale(1);
+  }
+}
+@keyframes pulse {
+  40% {
+    -webkit-transform: scale(1.2);
+    -moz-transform: scale(1.2);
+    transform: scale(1.2);
+  }
+
+  100% {
+    -webkit-transform: scale(1.2);
+    -moz-transform: scale(1.2);
+    transform: scale(1.2);
+  }
+}
+
+#statsLabel{
+-moz-transform: rotate(270deg);
+  -moz-transform-origin: 50% 50%;
+  -webkit-transform: rotate(270deg);
+  -webkit-transform-origin: left top 0 ;
+  margin-top: 90px ;
+  float: left ;
+}
+
+#statsLabel:hover{
+	color: blue ;
+	cursor: pointer ;
+}
+
+#statsContent{
+	float: left ;
+	margin-left: 10px ;
+	margin-top: 12px ;
+}
+
+#tweetsFound{
+	cursor: pointer ;
+}
+
+#statsContainer table{
+	width: 280px ;
+}
+
+#statsContainer tr {
+	border-bottom: 1px solid lightgray ;
+}
+
+#statsContainer tr td{
+	padding-bottom: 5px ;
+	padding-top: 5px ;
+}
+
+</style>
 
 <script>
 
 geoTweets = [] ; 
+userLocation = null ;
+userTopic = null ;
+markersAdded = 0 ;
+MAX_MARKERS = 10000 ;
+currentLocation = null ;
+mediaType = null ;
+
 $( document ).ready(function() {
+	
+	$('ul.dropdown-menu li a').click(function(){
+		console.log("activating mediatweets in menu") ;
+		$('#filterTweetsButton').addClass('active') ;
+	}) ;
+	
+	$('#tweetFoundButton').click(function(){
+		if(!$('#statsContainer').hasClass('opened')){
+			$('#statsContainer').slideDown().addClass('opened') ;
+			$('#tweetFoundButton span:eq(1)').removeClass('glyphicon-plus').addClass('glyphicon-minus') ;
+		} else{
+			$('#statsContainer').slideUp().removeClass('opened') ;
+			$('#tweetFoundButton span:eq(1)').removeClass('glyphicon-minus').addClass('glyphicon-plus') ;
+		}
+	}) ;
+	
+	$('.videos').click(function(){
+		mediaType = 'video' ;
+		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-video" style="color: orange"></span>') ;
+		$('#videoSelected').show() ;
+		$('#filterTweetsButton').addClass('active') ;
+	}) ;
+	
+	$('.photos').click(function(){
+		mediaType = 'photo' ;
+		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-camera" style="color: orange"></span>') ;
+		$('#photoSelected').show() ;
+		$('#filterTweetsButton').addClass('active') ;
+	}) ;
+	
+	$('.weblinks').click(function(){
+		mediaType = 'weblink' ;
+		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-link" style="color: orange"></span>') ;
+		$('#weblinkSelected').show() ;
+		$('#filterTweetsButton').addClass('active') ;
+	}) ;
+	
+	$('.music').click(function(){
+		mediaType = 'music' ;
+		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-music" style="color: orange"></span>') ;
+		$('#musicSelected').show() ;
+		$('#filterTweetsButton').addClass('active') ;
+	}) ;
+	
+	$('#videoSelected').click(function(){
+		$('#videoSelected').hide() ;
+		$('#selectedMediaType').html('') ;
+		mediaType = null ;
+		initialize() ;
+		$('#filterTweetsButton').removeClass('active') ;
+		$('#allTweetsButton').addClass('active') ;
+	}) ;
+	
+	$('#photoSelected').click(function(){
+		$('#photoSelected').hide() ;
+		$('#selectedMediaType').html('') ;
+		mediaType = null ;
+		initialize() ;
+		$('#filterTweetsButton').removeClass('active') ;
+		$('#allTweetsButton').addClass('active') ;
+	}) ;
+	
+	$('#weblinkSelected').click(function(){
+		$('#weblinkSelected').hide() ;
+		$('#selectedMediaType').html('') ;
+		mediaType = null ;
+		initialize() ;
+		$('#filterTweetsButton').removeClass('active') ;
+		$('#allTweetsButton').addClass('active') ;
+	}) ;
+	
+	$('#musicSelected').click(function(){
+		$('#musicSelected').hide() ;
+		$('#selectedMediaType').html('') ;
+		mediaType = null ;
+		initialize() ;
+		$('#filterTweetsButton').removeClass('active') ;
+		$('#allTweetsButton').addClass('active') ;
+	}) ;
+	
 	$('#welcomeMessageContainer').fadeIn("slow") ;
 	
 	$('#letsStartButton').click(function(){
-		$('#welcomeMessageContainer').fadeOut("slow") ;
+		$('#welcomeMessageContainer').fadeOut("slow").html('') ;
 	}) ;
 	
 	$('#openLoginPanel').click(function(){
@@ -35,11 +264,12 @@ $( document ).ready(function() {
 	}) ;
 	
 	$('#search').click(function(){
-		var city = $('#searchField').val() ;
+		/*var city = $('#searchField').val() ;
 		$.getJSON("http://maps.googleapis.com/maps/api/geocode/json?address="+city, function( data ) {
 			if($('#searchField').val().charAt(0) == '#'){
 				alert("oh u wanna find a topic, thats not implemented yet ;D") ;
 			} else{
+				initialize() ;
 				if(data.results.length > 0){
 					var latLng = new google.maps.LatLng(data.results[0].geometry.location.lat, data.results[0].geometry.location.lng); //Makes a latlng
 				    map.panTo(latLng); //Make map global
@@ -47,8 +277,111 @@ $( document ).ready(function() {
 					alert("nothing found bro ;D") ;
 				}
 			}
-		});
+		});*/
+		if($('#searchField').val().charAt(0) == '#'){
+			//alert("oh u wanna find a topic, thats not implemented yet ;D") ;
+			userTopic = $('#searchField').val() ;
+			var userTopicLabel = '<div class="btn-group" style="margin-left:5px">' +
+			 '<button class="btn btn-sm btn-primary" style="opacity:0.8">'+userTopic+'</button>' +
+	  		 '<button class="btn btn-sm btn-primary" id="deleteUserTopic" style="opacity:0.8"><span class="glyphicon glyphicon-remove"></span></button>' +
+			 '</div>' ;
+			$('#trendContainer').append(userTopicLabel).fadeIn("slow") ;
+			var mapCenter = map.getCenter() ;
+			var centerLat = mapCenter.k ;
+			var centerLong = mapCenter.D ;
+			var center = {'lat': centerLat, 'longi': centerLong} ;
+			initialize(center) ;
+		} else{
+			var city = $('#searchField').val() ;
+			$.getJSON("http://maps.googleapis.com/maps/api/geocode/json?address="+city, function( data ) {
+				initialize() ;
+				if(data.results.length > 0){
+					var latLng = new google.maps.LatLng(data.results[0].geometry.location.lat, data.results[0].geometry.location.lng); //Makes a latlng
+				    map.panTo(latLng); //Make map global
+				} else{
+					alert("nothing found bro ;D") ;
+				}
+			});
+		}
+		//$('#searchField').val('') ;
 	}) ;
+	
+	$('#searchField').click(function(){
+		/*if(!$('#searchField').hasClass("expanded")){
+			$("#searchField").animate({'width': '+=100px'}, 500);
+			$("#searchField").addClass("expanded") ;
+		}*/
+	}) ;
+	
+	$('#searchField').focusout(function(){
+		/*$("#searchField").animate({'width': '-=100px'}, 500);
+		$("#searchField").removeClass("expanded") ;*/
+	}) ;
+	
+	
+	$(window).keydown(function(event){
+	    if(event.keyCode == 13) {
+	      event.preventDefault();
+	      
+	      if($("#searchField").is(":focus")){
+	    	  $('#search').click() ;
+	      }
+	      
+	      return false;
+	    }
+	  });
+	
+	
+	$('#trendContainer').on('click', '#deleteUserTopic', function(){
+		console.log("hello") ;
+		userTopic = null ;
+		$('#trendContainer').fadeOut('slow') ;
+		initialize() ;
+	}) ;
+	
+	$('.navbar ul li a').click(function(){
+		if(!$(this).hasClass('filter'))
+			$('.navbar ul li').removeClass("active") ;
+		$(this).parent().addClass("active") ;
+		if($(this).attr("class") == "hotTopics"){
+			$.getJSON("TweetServlet?getTrends", function( data ) {
+				var trends = data.trends ;
+				var trendList = '' ;
+				for(var i = 0 ; i < trends.length ; i++){
+					trendList += '<div class="btn-group" style="margin-left:5px">' +
+								 '<button class="btn btn-sm btn-success" style="opacity:0.8">'+trends[i]+'</button>' +
+						  		 '<button class="btn btn-sm btn-success" style="opacity:0.8"><span class="glyphicon glyphicon-remove"></span></button>' +
+								 '</div>' ;
+				}
+				$('#trendContainer').html(trendList) ;
+			});
+			
+			$('#trendContainer').fadeIn("slow") ;
+			initialize() ;
+		} else if($(this).hasClass('mediaTweets')){
+			
+		} else{
+			$('#trendContainer').fadeOut("slow") ;
+			initialize() ;
+		}
+	}) ;
+	
+	function getLocation() {
+		console.log("hello") ;
+	    if (navigator.geolocation) {
+	        navigator.geolocation.watchPosition(showPosition);
+	    } else {
+	       console.log("Geolocation is not supported by this browser.");
+	    }
+	}
+	function showPosition(position) {
+	    console.log("Latitude: " + position.coords.latitude + 
+	    ";Longitude: " + position.coords.longitude); 
+	    userLocation = position.coords ;
+	}
+	
+	getLocation() ;
+	
 });
 
 var style_array = [
@@ -115,10 +448,45 @@ var style_array = [
                    {}
                ] ;
                
-function initialize() {
+function initialize(center1) {
+  markersAdded = 0 ;
+  geoTweets = [] ;
+  newTweets = [] ;
+  statTextTweets = 0 ;
+  statPhotoTweets = 0 ;
+  statVideoTweets = 0 ;
+  statMusicTweets = 0 ;
+  statLinkTweets = 0 ;
+  
+  $('#textTweetStatCount,#linkTweetStatCount,#videoTweetStatCount,#musicTweetStatCount,#photoTweetStatCount').html(0) ;
+  
+  $('#tweetsLoadedCount').html(0) ;
+  $('#tweetsFound').html('<span class="glyphicon glyphicon-plus"></span> Tweets found') ;
+  var center = new google.maps.LatLng(48.20732, 16.373792) ;
+    
+  console.log("center: " + center1) ;
+  var locationGiven = false ;
+  
+  if(center1 == "[object Event]" || typeof(center1) === "undefined"){
+	  console.log("yeah") ;
+	  locationGiven = false ;
+  } else{
+	  locationGiven = true ;
+  }
+  
+  if(userLocation != null && !locationGiven){
+	  console.log("user enabled tracking, so setting his location..") ;
+	  center = new google.maps.LatLng(userLocation.latitude, userLocation.longitude) ;
+  } else if(locationGiven){
+	  console.log("setting center to given location") ;
+	  center = new google.maps.LatLng(center1.lat, center1.longi) ;
+  } else{
+	  console.log("user diabled tracking, setting center to default location") ;
+  }
+  
   var mapOptions = {
     zoom: 12,
-    center: new google.maps.LatLng(48.20732, 16.373792),
+    center: center,
     styles: style_array,
     disableDefaultUI: true, 
     zoomControl: true, 
@@ -130,21 +498,44 @@ function initialize() {
   map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
   
   google.maps.event.addListener(map, 'idle', function() {
-	    // 3 seconds after the center of the map has changed, pan back to the
-	    // marker.
+    console.log("zoom: " + map.getZoom() ) ;
+  
+    	$('#statsContainer').slideUp() ;
+	    // 3 seconds after the center of the map has changed
+	    $('#tweetsFound').html("Loading") ;
+	    $('#tweetsLoadedCount').html('<span class="glyphicon glyphicon-refresh glyphicon-refresh-animate"></span>') ;
+	    
+	    var mapCenter = map.getCenter() ;
+		var centerLat = mapCenter.k ;
+		var centerLong = mapCenter.D ;
+		
+		/*currentLocation = {} ;
+		currentLocation.latitude = centerLat ;
+		currentLocation.longitude = centerLong ;
+		
+		console.log("currentLocation in idle: " + currentLocation.latitude + ";" + currentLocation.longitude) ;
+	    */
+	    
 	    window.setTimeout(function() {
-	    	reloatTweets() ;
+	    	if(markersAdded <= MAX_MARKERS)
+	    		reloatTweets() ;
 	    }, 3000);
 	  });
-  
   reloatTweets() ;  
 }
 
-function reloatTweets(){
+function reloatTweets(filterMediaType){
 	var mapCenter = map.getCenter() ;
 	var centerLat = mapCenter.k ;
 	var centerLong = mapCenter.D ;
-	$.getJSON( "TweetServlet?lat="+centerLat+"&long="+centerLong, function( data ) {
+
+	
+	var filterMediaType = (mediaType == null) ? '' : '&mediaType='+mediaType ;
+
+	var getJustHotTopics = $('.hotTopics').parent().hasClass('active') ? '&trendTweets=true' : '' ;
+	var topic = (userTopic != null) ? "&topic=" + userTopic.substring(1,userTopic.length) : "" ;
+	$.getJSON( "TweetServlet?lat="+centerLat+"&long="+centerLong+getJustHotTopics+topic+filterMediaType, function( data ) {
+
 		var tweetResult = data.result ;
 		var newTweets = [] ;
 		if(geoTweets.length == 0){
@@ -175,17 +566,16 @@ function reloatTweets(){
 	});
 }
 
+function filterMarkers(mediaType){
+	
+}
+statTextTweets = 0 ;
+statPhotoTweets = 0 ;
+statVideoTweets = 0 ;
+statMusicTweets = 0 ;
+statLinkTweets = 0 ;
 function setMarkers(map, geotweet) {
   
-  var markerUrl = 'http://www.michischaaf.at/wp-content/uploads/2014/04/schaaaf_twitter.png' ;
-  
-  var markerUrls = ['musicIcon.png', 'picIcon.png', 'vidIcon.png', 'popularPostIcon.png', 'linkIcon.png'] ;
-  
-  // Shapes define the clickable region of the icon.
-  // The type defines an HTML &lt;area&gt; element 'poly' which
-  // traces out a polygon as a series of X,Y points. The final
-  // coordinate closes the poly by connecting to the first
-  // coordinate.
   var shape = {
       coords: [1, 1, 1, 20, 18, 20, 18 , 1],
       type: 'poly'
@@ -194,46 +584,60 @@ function setMarkers(map, geotweet) {
   for ( var i = 0 ; i < geotweet.length ; i++ ) {
 	  
 	  // set the right marker depending on mediatype
-	  if(jQuery.isEmptyObject(geotweet[i].media)){
-		  markerUrl = markerUrls[4] ;
-	  } else if(geotweet[i].media.photo != "undefined"){
-		  markerUrl = markerUrls[1] ;
-	  } else if(geotweet[i].media.video != "undefined"){
-		  markerUrl = markerUrls[2] ;
-	  } else if(geotweet[i].media.audio != "undefinded"){
-		  markerUrl = markerUrls[0] ;
+	  if(geotweet[i].isVideoTweet){
+		  markerClass = "videoMarker" ;
+		  statVideoTweets++ ;
+		  $('#videoTweetStatCount').html(statVideoTweets) ;
+	  }
+	  else if(jQuery.isEmptyObject(geotweet[i].media) && !geotweet[i].isLinkTweet && !geotweet[i].isPhotoLinked && !geotweet[i].isVideoTweet){
+		  markerClass = "linkMarker" ;
+		  statTextTweets++ ;
+		  $('#textTweetStatCount').html(statTextTweets) ;
+	  }else if(jQuery.isEmptyObject(geotweet[i].media) && geotweet[i].isLinkTweet){
+		  markerClass = "linkMarker" ;
+		  statLinkTweets++ ;
+		  $('#linkTweetStatCount').html(statLinkTweets) ;
+	  } else if(geotweet[i].media.photo != "undefined" || geotweet[i].isPhotoLinked){
+		  markerClass = "photoMarker" ;
+		  statPhotoTweets++ ;
+		  $('#photoTweetStatCount').html(statPhotoTweets) ;
+	  }  else if(geotweet[i].media.audio != "undefinded"){
+		  markerClass = "musicMarker" ;
+		  statMusicTweets++ ;
+		  $('#musicTweetStatCount').html(statMusicTweets) ;
 	  }
   
-  var image = {
-    url: markerUrl,
-    /*// This marker is 20 pixels wide by 32 pixels tall.
-    size: new google.maps.Size(40, 40),
-    // The origin for this image is 0,0.
-    origin: new google.maps.Point(0,0),
-    // The anchor for this image is the base of the flagpole at 0,32.
-    anchor: new google.maps.Point(0, 32) */
-  };
-	  addMarker(map,geotweet[i], image, shape, i) ;
+ 
+	  addMarker(map,geotweet[i], markerClass, shape, i) ;
   }
+  if(geotweet.length != 0)
+ 	 setTimeout(function(){ $('#statsContainer').slideDown() ;}, geotweet.length*100) ;
+  
 }
 
-function addMarker(map, geotweet, image, shape, i){
+function addMarker(map, geotweet, markerClass, shape, i){
+	//console.log(markersAdded) ;
 
 	 setTimeout(function() {
+
 		 var beach = location;
 	    var myLatLng = new google.maps.LatLng(geotweet.latitude, geotweet.longitude);
 	     var shape = {
       coords: [1, 1, 1, 40, 40, 40, 40 , 1],
       type: 'poly'
   };
-	    var marker = new google.maps.Marker({
+	    var marker = new MarkerWithLabel({
 	        position: myLatLng,
 	        map: map,
-	        icon: image,
+	        icon: {
+	            path: google.maps.SymbolPath.CIRCLE,
+	            scale: 0, //tamaño 0
+	          },
 	        shape: shape,
 	        //title: beach[0],
 	        zIndex: i, 
-	        animation: google.maps.Animation.DROP
+	        labelClass: markerClass
+	        //animation: google.maps.Animation.DROP
 	    });
 	    marker.geotweet = geotweet ;
 
@@ -267,12 +671,16 @@ function addMarker(map, geotweet, image, shape, i){
 	console.log(marker.geotweet.longitude+";"+marker.geotweet.latitude+","+marker.geotweet.hash) ;
   });
   
-   google.maps.event.addListener(marker, 'mouseout', function() {   if(!marker.clicked){
- 	 tweetWindow.close() ;
- 	 marker.clicked = false ;
+   google.maps.event.addListener(marker, 'mouseout', function() {   
+   	if(!marker.clicked){
+ 		tweetWindow.close() ;
+ 		marker.clicked = false ;
    }
 	  
   });
+	markersAdded++ ;
+	$('#tweetsFound').html('<span class="glyphicon glyphicon-plus"></span> Tweets found') ;
+	$('#tweetsLoadedCount').html(markersAdded) ;
 	  }, i * 100);
 }
 
@@ -298,34 +706,55 @@ google.maps.event.addDomListener(window, 'load', initialize);
     <!-- Collect the nav links, forms, and other content for toggling -->
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
       <ul class="nav navbar-nav">
-        <li class="active"><a href="#"><span class="glyphicon glyphicon-asterisk" style="color: green"></span> All Tweets</a></li>
+        <li class="active" id="allTweetsButton"><a href="#" class="allTweets"><span class="glyphicon glyphicon-asterisk" style="color: green"></span> All Tweets</a></li>
         
-        <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-eye-open" style="color: blue"></span> Media Tweets <span class="caret"></span></a>
+        <li class="dropdown filterTweets" id="filterTweetsButton">
+          <a href="#" class="dropdown-toggle mediaTweets" data-toggle="dropdown"><span class="glyphicon glyphicon-eye-open" style="color: blue"></span> Media Tweets<span id="selectedMediaType"></span> <span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
-            <li><a href="#"><span class="glyphicon glyphicon-camera"></span> Photos</a></li>
-            <li><a href="#"><span class="glyphicon glyphicon-facetime-video"></span> Videos</a></li>
-            <li><a href="#"><span class="glyphicon glyphicon-music"></span> Music</a></li>
-            <li><a href="#"><span class="glyphicon glyphicon-link"></span> Webpage</a></li>
+
+            <li><a href="#" class="photos filter" style="float: left"><span class="glyphicon glyphicon-camera"></span> Photos</a> <span id="photoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li><a href="#" class="videos filter" style="float: left"><span class="glyphicon glyphicon-facetime-video"></span> Videos</a> <span id="videoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li style="display: none"><a href="#" class="music filter" style="float: left"><span class="glyphicon glyphicon-music"></span> Music</a> <span id="musicSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li><a href="#" class="weblinks filter" style="float: left"><span class="glyphicon glyphicon-link"></span> Webpage</a> <span id="linkSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+<!-- 
+            <li><a href="#" class="photos" style="float: left"><span class="glyphicon glyphicon-camera"></span> Photos</a> <span id="photoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li><a href="#" class="videos" style="float: left"><span class="glyphicon glyphicon-facetime-video"></span> Videos</a> <span id="videoSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li style="display: none"><a href="#" class="music" style="float: left"><span class="glyphicon glyphicon-music"></span> Music</a> <span id="musicSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+            <li><a href="#" class="weblinks" style="float: left"><span class="glyphicon glyphicon-link"></span> Webpage</a> <span id="linkSelected" class="glyphicon glyphicon-remove" style="color: red; display: none; float: right; margin-top: 5px; margin-right: 10px; cursor: pointer"></span><span style="clear: both"></span></li>
+ -->
           </ul>
         </li>
-        <li><a href="#"><span class="glyphicon glyphicon-fire" style="color: darkred"></span> Hot Topics</a></li>
+        <li><a href="#" class="hotTopics"><span class="glyphicon glyphicon-fire" style="color: darkred"></span> Hot Topics</a></li>
       </ul>
       <form class="navbar-form navbar-left" role="search">
         <div class="form-group">
           <input type="text" id="searchField" class="form-control" placeholder="Find Locations or Topics, e.g. Vienna or #asdf " style="width: 380px">
         </div>
         <button type="button" class="btn btn-default" id="search">Go!</button>
+        <button class="btn btn-info" type="button" id="tweetFoundButton" data-toggle="tooltip" data-placement="left" title="Click to get Tweet Statistics">
+		  <span id="tweetsFound"><span class="glyphicon glyphicon-plus"></span> Tweets found</span> <span class="badge" id="tweetsLoadedCount">4</span>
+		<div id="statsContainer" style="cursor: initial; text-align: left; color: #777; text-shadow: none; margin-top: 20px; width: 300px; height: 165px; background-color: white; opacity: 0.8; position: absolute; border-radius: 5px; padding: 10px; z-index: 10; margin-left: -13px; display: none">
+		<span style="text-align:left"><b>Statistics</b></span><hr style="margin-top: 5px; margin-bottom: 5px; border-color: lightgray"/>
+		<table>
+		<tr><td><span class="glyphicon glyphicon-align-justify"></span> Text Tweets</td><td id="textTweetStatCount" style="text-align:right">0</td></tr>
+		<tr><td><span class="glyphicon glyphicon-camera"></span> Photo Tweets</td><td id="photoTweetStatCount" style="text-align:right">0</td></tr>
+		<tr><td><span class="glyphicon glyphicon-link"></span> Webpage Tweets</td><td id="linkTweetStatCount" style="text-align:right">0</td></tr>
+		<tr style="border-bottom: none"><td><span class="glyphicon glyphicon-facetime-video"></span> Video Tweets</td><td id="videoTweetStatCount" style="text-align:right">0</td></tr>
+		<tr style="display: none"><td><span class="glyphicon glyphicon-music"></span> Music Tweets</td><td id="musicTweetStatCount" style="text-align:right">0</td></tr>
+		</table>
+		</div>
+		</button>
+        
       </form>
       <ul class="nav navbar-nav navbar-right">
-      <form class="navbar-form navbar-right" role="search">
+      <form class="navbar-form navbar-right" role="search" action="">
         <button type="button" class="btn btn-primary" id="openLoginPanel">Login</button>
       </form>
       </ul>
     </div><!-- /.navbar-collapse -->
   </div><!-- /.container-fluid -->
 </nav>
-<div id="map-canvas" style="width:100%;height:600px"></div>
+<div id="map-canvas" style="width:100%;height:630px"></div>
 <div class="jumbotron" id="welcomeMessageContainer" style="width:99%; display: none; background-color: white; opacity: 0.75; height: 530px; margin: 0 auto; margin-top: -550px;">
  <h1>Welcome on GeoTweets!</h1><br/>
   <h2>It looks like you are visiting us from <span style="color: blue">Vienna</span>, explore the tweets around you.<br/><br/></h2>
@@ -355,5 +784,7 @@ Password:
   return window.twttr || (t = { _e: [], ready: function (f) { t._e.push(f) } });
 }(document, "script", "twitter-wjs"));</script>
 
+<div id="trendContainer" style="position:absolute;left: 40px; top: 60px;display:none;">
+</div>
 </body>
 </html>

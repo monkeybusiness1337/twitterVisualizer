@@ -27,10 +27,17 @@ public class TweetServlet extends HttpServlet implements Servlet {
     // test coord: 48.20732f,16.373792f
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		response.setContentType("application/json");
-		double longitude = Double.parseDouble(request.getParameter("long")) ;
-		double latitude = Double.parseDouble(request.getParameter("lat")) ;
 		PrintWriter pw = response.getWriter() ;
-		String tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), "asd", MediaType.PHOTO, false) ;
+		String tweets = null ;
+		double longitude = 0.0f ;
+		double latitude = 0.0f  ;
+		
+		if(request.getParameterMap().containsKey("long") && request.getParameterMap().containsKey("long")){
+			longitude = Double.parseDouble(request.getParameter("long")) ;
+			latitude = Double.parseDouble(request.getParameter("lat")) ;
+		}
+		
+		tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), "asd", null, false) ;
 		HttpSession session = request.getSession(true);
 		
 		String checkLogin = (String) session.getAttribute("checkLogin");
@@ -39,17 +46,40 @@ public class TweetServlet extends HttpServlet implements Servlet {
 			String accessToken =(String) session.getAttribute("accessToken");
 			String accessTokenSecret = (String) session.getAttribute("accessTokenSecret");
 			this.tweetCrawler.init(accessToken, accessTokenSecret);
-			tweets = this.tweetCrawler.getPrivateTweets(new Location(latitude,longitude), "asd", MediaType.PHOTO, false);
-			
+			tweets = this.tweetCrawler.getPrivateTweets(new Location(latitude,longitude), "asd", null, false);
 			//session.setAttribute("checkinit", checkInit);
+			pw.print(tweets) ;
+			pw.flush() ;
 		} else {
-			this.tweetCrawler.init();
-			tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), "asd", MediaType.PHOTO, false) ;
-			
+			//this.tweetCrawler.init();
+			//tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), "asd", null , false) ;
 			//session.setAttribute("checkinit", checkInit);
+			
+			if(request.getParameterMap().containsKey("long") && request.getParameterMap().containsKey("long")){
+				longitude = Double.parseDouble(request.getParameter("long")) ;
+				latitude = Double.parseDouble(request.getParameter("lat")) ;
+				boolean hotTopics = request.getParameterMap().containsKey("trendTweets") ;
+				boolean hasTopic = request.getParameterMap().containsKey("topic") ;
+				boolean hasMediatype = request.getParameterMap().containsKey("mediaType") ;
+				String topic = hasTopic ? request.getParameter("topic") : null ;
+				String mediaType = hasMediatype ? request.getParameter("mediaType") : null ;
+				tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), topic, mediaType, hotTopics) ;
+				pw.print(tweets) ;
+				pw.flush() ;
+			} else if(request.getParameterMap().containsKey("getTrends")){
+				String trends = this.tweetCrawler.getTrends();
+				pw.print(trends) ;
+				pw.flush() ;
+			}
 		}
-		pw.print(tweets) ;
-		pw.flush() ;
+	
+		
+		
+		
+		
+		//String tweets = this.tweetCrawler.getTweets(new Location(latitude,longitude), "asd", MediaType.PHOTO, false) ;
+		//pw.print(tweets) ;
+		//pw.flush() ;
 		
 		// if session set and .init(..,..) wasn't executed now
 		//oauthToken = session.getParameter("oauthToken") ;
