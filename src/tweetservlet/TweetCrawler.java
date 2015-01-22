@@ -22,7 +22,6 @@ import twitter4j.Trends;
 import twitter4j.Twitter;
 import twitter4j.TwitterException;
 import twitter4j.TwitterFactory;
-
 import twitter4j.Query.Unit;
 import twitter4j.URLEntity;
 import twitter4j.conf.ConfigurationBuilder;
