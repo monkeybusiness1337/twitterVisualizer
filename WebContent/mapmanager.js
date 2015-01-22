@@ -501,7 +501,7 @@ function addMarker(map, geotweet, markerClass, shape, i){
       coords: [1, 1, 1, 40, 40, 40, 40 , 1],
       type: 'poly'
   };
-	    var marker = new MarkerWithLabel({
+	   /* var marker = new MarkerWithLabel({
 	        position: myLatLng,
 	        map: map,
 	        icon: {
@@ -513,7 +513,30 @@ function addMarker(map, geotweet, markerClass, shape, i){
 	        zIndex: i, 
 	        labelClass: markerClass
 	        //animation: google.maps.Animation.DROP
-	    });
+	    });*/
+	     
+	     var markerImage = "textIcon.png" ;
+ 	     
+	     if(markerClass == "videoMarker")
+ 	    	markerImage = "vidIcon.png" ;
+ 	     else if(markerClass == "linkMarker")
+ 	    	 markerImage = "linkIcon.png" ;
+ 	     else if(markerClass == "photoMarker")
+	    	 markerImage = "picIcon.png" ;
+ 	     else if(markerClass == "photoMarker")
+	    	 markerImage = "picIcon.png" ;
+ 	     else if(markerClass == "musicMarker")
+ 	    	 markerImage = "musicIcon.png" ;
+	     
+	     var marker = new google.maps.Marker({
+		        position: myLatLng,
+		        map: map,
+		        icon: markerImage,
+		        shape: shape,
+		        //title: beach[0],
+		        zIndex: i, 
+		        //animation: google.maps.Animation.DROP
+		    });
 	    marker.geotweet = geotweet ;
 
    var pic = '' ;
