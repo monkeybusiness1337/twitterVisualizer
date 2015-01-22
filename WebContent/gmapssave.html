@@ -170,6 +170,18 @@ mediaType = null ;
 
 $( document ).ready(function() {
 	
+	$.post( "TweetServlet?isLoggedIn", function( data ) {
+		if(data == true){
+			$('#openLoginPanel').hide() ;
+			$('#logoutButton').show() ;
+			console.log("loggedIn") ;
+		} else{
+			$('#logoutButton').hide() ;
+			$('#openLoginPanel').show() ;
+			console.log("not loggedIn") ;
+		}
+	});
+	
 	$('ul.dropdown-menu li a').click(function(){
 		console.log("activating mediatweets in menu") ;
 		$('#filterTweetsButton').addClass('active') ;
@@ -258,6 +270,13 @@ $( document ).ready(function() {
 	$('#openLoginPanel').click(function(){
 		console.log("asdasdasdasdasdasd") ;
 		document.location.href = "http://tomcat01lab.cs.univie.ac.at:31897/TweetServlet/LoginServlet";
+	}) ;
+	
+	$('#logoutButton').click(function(){
+		$.post( "TweetServlet?logMeOut", function( data ) {
+			$('#openLoginPanel').show() ;
+			$('#logoutButton').hide() ;
+		});
 	}) ;
 	
 	$('#login, #cancleLogin').click(function(){
@@ -750,6 +769,7 @@ google.maps.event.addDomListener(window, 'load', initialize);
       <ul class="nav navbar-nav navbar-right">
       <form class="navbar-form navbar-right" role="search" action="">
         <button type="button" class="btn btn-primary" id="openLoginPanel">Login</button>
+        <button type="button" class="btn btn-primary" id="logoutButton">Logout</button>
       </form>
       </ul>
     </div><!-- /.navbar-collapse -->

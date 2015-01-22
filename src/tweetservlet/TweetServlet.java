@@ -89,7 +89,21 @@ public class TweetServlet extends HttpServlet implements Servlet {
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+		response.setContentType("application/json");
+		PrintWriter pw = response.getWriter() ;
 		
+		if(request.getParameterMap().containsKey("isLoggedIn")){
+			HttpSession session = request.getSession(true);
+			String checkLogin = (String) session.getAttribute("checkLogin");
+			if(checkLogin == "true"){
+				pw.write("true");
+			} else{
+				pw.write("false") ;
+			}
+			pw.flush() ;
+		} else if(request.getParameterMap().containsKey("logMeOut")){
+			request.getSession().invalidate() ;
+		}
 	}
 
 }
