@@ -37,8 +37,6 @@ public class TweetCrawler {
 	// Test
 	public static void main(String args[]){
 		TweetCrawler ts = new TweetCrawler() ;
-
-
 		String tweets = ts.getTweets(new Location(48.20732f,16.373792f), null, "photo", false) ;
 		System.out.print(tweets) ;
 		//ts.getTrends();
@@ -83,7 +81,7 @@ public class TweetCrawler {
 				if(tweets.size() == 0) break ;
 
 				for (Status tweet : tweets) {
-					if(mediaType != null){
+					if(mediaType != null && mediaType.compareTo("photo") == 0){
 						ArrayList<MediaEntity> mediaEntities = new ArrayList<MediaEntity>(Arrays.asList(tweet.getMediaEntities())) ;
 						for(MediaEntity mediaEntity : mediaEntities){
 							if(mediaEntity.getType().compareTo(mediaType) == 0){
@@ -91,6 +89,12 @@ public class TweetCrawler {
 								break ;
 							}
 						}
+					} else if(mediaType != null && mediaType.compareTo("video") == 0){
+						if(tweetContainsVideo(tweet))
+							tweetResults.add(getJSONGeoTweet(tweet)) ;
+					} else if(mediaType != null && mediaType.compareTo("weblink") == 0){
+						if(tweetContainsWeblink(tweet))
+							tweetResults.add(getJSONGeoTweet(tweet)) ;
 					} else{
 						tweetResults.add(getJSONGeoTweet(tweet)) ;
 					}
@@ -181,6 +185,10 @@ public class TweetCrawler {
 		ArrayList<String> trendsArray = new ArrayList<String>() ;
 		
 		try {
+			// static place id for vienna
+			// better would be depending on user location, getting the most
+			// appropiate placeId and inserting it dynamically in the
+			// getPlaceTrens- method
 			trends = twitter.getPlaceTrends(23424750);
 			
 			for (int i = 0; i < trends.getTrends().length; i++) {
@@ -202,7 +210,7 @@ public class TweetCrawler {
 		obj.put("latitude", tweet.getGeoLocation().getLatitude()) ;
 		obj.put("longitude", tweet.getGeoLocation().getLongitude()) ;
 		obj.put("favCount", tweet.getFavoriteCount()) ;
-		String parsedTweet = this.parse(tweet.getText()) ;
+		String parsedTweet = parse(tweet.getText()) ;
 		obj.put("content", parsedTweet) ;
 		
 		boolean isLinkTweet = false ;
@@ -278,7 +286,7 @@ public class TweetCrawler {
 		TwitterFactory tf = new TwitterFactory(cb.build());
 		this.twitter = tf.getInstance();
 	}
-	String parse(String tweetText) {
+	public static String parse(String tweetText) {
 		 
 	     // Search for URLs
 	     if (tweetText.contains("http:")) {
@@ -323,4 +331,44 @@ public class TweetCrawler {
 	     }
 	     return tweetText;
 	 }
+	
+	public static boolean tweetContainsVideo(Status tweet){
+		if(tweet.getURLEntities().length > 0){
+			String expandedUrl = tweet.getURLEntities()[0].getExpandedURL() ;
+			boolean containsVideoUrl = (expandedUrl.contains("youtube") ||
+					expandedUrl.contains("y2u.be") ||
+					expandedUrl.contains("vimeo") || 
+					expandedUrl.contains("youtu.be")) ;
+			if(containsVideoUrl)
+				return true ;
+		}
+		return false ;
+	}
+	
+	public static boolean tweetContainsWeblink(Status tweet){
+		String parsedTweet = parse(tweet.getText()) ;	
+		String expandedUrl = "" ;
+		boolean containsPhoto = false ;
+		for(MediaEntity me : tweet.getMediaEntities()){
+			if(me.getType().compareTo("photo") == 0){
+				containsPhoto = true ;
+				break ;
+			}
+		}
+		
+		if(tweet.getURLEntities().length > 0){
+			expandedUrl = tweet.getURLEntities()[0].getExpandedURL() ;
+		}
+		
+		boolean containsVideoUrl = (expandedUrl.contains("youtube") ||
+				expandedUrl.contains("y2u.be") ||
+				expandedUrl.contains("vimeo") || 
+				expandedUrl.contains("youtu.be")) ;
+		
+		boolean containsPhotoUrl = expandedUrl.contains("instagram") ;
+		
+		if(parsedTweet.contains("<a href=") && !containsVideoUrl && !containsPhoto && !containsPhotoUrl)
+			return true ;
+		return false ;
+	}
 }

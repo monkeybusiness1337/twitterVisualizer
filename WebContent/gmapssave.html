@@ -202,6 +202,7 @@ $( document ).ready(function() {
 		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-video" style="color: orange"></span>') ;
 		$('#videoSelected').show() ;
 		$('#filterTweetsButton').addClass('active') ;
+		$('#searchField').css('width', '360px') ;
 	}) ;
 	
 	$('.photos').click(function(){
@@ -209,13 +210,15 @@ $( document ).ready(function() {
 		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-camera" style="color: orange"></span>') ;
 		$('#photoSelected').show() ;
 		$('#filterTweetsButton').addClass('active') ;
+		$('#searchField').css('width', '360px') ;
 	}) ;
 	
 	$('.weblinks').click(function(){
 		mediaType = 'weblink' ;
 		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-link" style="color: orange"></span>') ;
-		$('#weblinkSelected').show() ;
+		$('#linkSelected').show() ;
 		$('#filterTweetsButton').addClass('active') ;
+		$('#searchField').css('width', '360px') ;
 	}) ;
 	
 	$('.music').click(function(){
@@ -223,6 +226,7 @@ $( document ).ready(function() {
 		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-music" style="color: orange"></span>') ;
 		$('#musicSelected').show() ;
 		$('#filterTweetsButton').addClass('active') ;
+		$('#searchField').css('width', '360px') ;
 	}) ;
 	
 	$('#videoSelected').click(function(){
@@ -232,6 +236,7 @@ $( document ).ready(function() {
 		initialize() ;
 		$('#filterTweetsButton').removeClass('active') ;
 		$('#allTweetsButton').addClass('active') ;
+		$('#searchField').css('width', '380px') ;
 	}) ;
 	
 	$('#photoSelected').click(function(){
@@ -241,15 +246,17 @@ $( document ).ready(function() {
 		initialize() ;
 		$('#filterTweetsButton').removeClass('active') ;
 		$('#allTweetsButton').addClass('active') ;
+		$('#searchField').css('width', '380px') ;
 	}) ;
 	
-	$('#weblinkSelected').click(function(){
-		$('#weblinkSelected').hide() ;
+	$('#linkSelected').click(function(){
+		$('#linkSelected').hide() ;
 		$('#selectedMediaType').html('') ;
 		mediaType = null ;
 		initialize() ;
 		$('#filterTweetsButton').removeClass('active') ;
 		$('#allTweetsButton').addClass('active') ;
+		$('#searchField').css('width', '380px') ;
 	}) ;
 	
 	$('#musicSelected').click(function(){
@@ -259,6 +266,7 @@ $( document ).ready(function() {
 		initialize() ;
 		$('#filterTweetsButton').removeClass('active') ;
 		$('#allTweetsButton').addClass('active') ;
+		$('#searchField').css('width', '380px') ;
 	}) ;
 	
 	$('#welcomeMessageContainer').fadeIn("slow") ;
@@ -698,7 +706,23 @@ function addMarker(map, geotweet, markerClass, shape, i){
    }
 	  
   });
-	markersAdded++ ;
+   
+      
+   var max_count = 0 ;
+   
+   if(mediaType == null)
+   	max_count = statTextTweets + statPhotoTweets + statVideoTweets + statLinkTweets ;
+   else if(mediaType == "photo")
+   	max_count = statPhotoTweets ;
+   else if(mediaType == "video")
+   	max_count = statVideoTweets ;
+   else if(mediaType == "weblink")
+    max_count = statLinkTweets ;
+   
+   if(markersAdded <= max_count){
+	   markersAdded++ ;
+   }
+	
 	$('#tweetsFound').html('<span class="glyphicon glyphicon-plus"></span> Tweets found') ;
 	$('#tweetsLoadedCount').html(markersAdded) ;
 	  }, i * 100);
