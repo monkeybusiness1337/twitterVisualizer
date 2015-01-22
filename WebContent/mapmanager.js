@@ -13,6 +13,10 @@ mediaType = null ;
 
 $( document ).ready(function() {
 	
+	setTimeout(function(){
+		$('#welcomeMessageContainer').fadeOut("slow") ;
+	}, 5000) ;
+	
 	$.post( "TweetServlet?isLoggedIn", function( data ) {
 		if(data == true){
 			$('#openLoginPanel').hide() ;

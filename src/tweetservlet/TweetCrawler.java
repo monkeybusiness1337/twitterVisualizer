@@ -43,6 +43,7 @@ public class TweetCrawler {
 		System.out.println("\n\nCOMPARISON TEST\n\n") ;
 		String expandedUrl = "youtube.com" ;
 		System.out.println("expanded url contains: " + (expandedUrl.contains("youtube") ? "yep" : "nope")) ;
+		System.out.print(ts.getTrends());
 	}
 	
 	public TweetCrawler(){
