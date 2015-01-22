@@ -63,6 +63,18 @@ body{
     animation: pulse 0.7s ease 3s 2;
 }
 
+.textMarker{
+	background-image: url('textIcon.png') ;
+	height: 60px ;
+	width: 35px ;
+	background-repeat: no-repeat ;
+	margin-top: -60px !important ;
+	margin-left: -17px !important ;
+	-webkit-animation: pulse 0.7s ease 0.3s 2;
+    -moz-animation: pulse 0.7s ease 0.3s 2;
+    animation: pulse 0.7s ease 3s 2;
+}
+
 @-webkit-keyframes pulse {
  40% {
     -webkit-transform: scale(1.2);

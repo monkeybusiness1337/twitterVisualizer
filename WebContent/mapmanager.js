@@ -40,7 +40,7 @@ $( document ).ready(function() {
 	
 	$('.videos').click(function(){
 		mediaType = 'video' ;
-		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-video" style="color: orange"></span>') ;
+		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-film" style="color: orange"></span>') ;
 		$('#videoSelected').show() ;
 		$('#filterTweetsButton').addClass('active') ;
 		$('#searchField').css('width', '360px') ;
@@ -56,7 +56,7 @@ $( document ).ready(function() {
 	
 	$('.weblinks').click(function(){
 		mediaType = 'weblink' ;
-		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-link" style="color: orange"></span>') ;
+		$('#selectedMediaType').html(': <span class="glyphicon glyphicon-globe" style="color: orange"></span>') ;
 		$('#linkSelected').show() ;
 		$('#filterTweetsButton').addClass('active') ;
 		$('#searchField').css('width', '360px') ;
@@ -459,7 +459,7 @@ function setMarkers(map, geotweet) {
 		  $('#videoTweetStatCount').html(statVideoTweets) ;
 	  }
 	  else if(jQuery.isEmptyObject(geotweet[i].media) && !geotweet[i].isLinkTweet && !geotweet[i].isPhotoLinked && !geotweet[i].isVideoTweet){
-		  markerClass = "linkMarker" ;
+		  markerClass = "textMarker" ;
 		  statTextTweets++ ;
 		  $('#textTweetStatCount').html(statTextTweets) ;
 	  }else if(jQuery.isEmptyObject(geotweet[i].media) && geotweet[i].isLinkTweet){
