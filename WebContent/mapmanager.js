@@ -167,10 +167,12 @@ $( document ).ready(function() {
 		} else{
 			var city = $('#searchField').val() ;
 			$.getJSON("http://maps.googleapis.com/maps/api/geocode/json?address="+city, function( data ) {
-				initialize() ;
+				
 				if(data.results.length > 0){
 					var latLng = new google.maps.LatLng(data.results[0].geometry.location.lat, data.results[0].geometry.location.lng); //Makes a latlng
 				    map.panTo(latLng); //Make map global
+					var newCenter = {'lat': data.results[0].geometry.location.lat, 'longi': data.results[0].geometry.location.lng} ;
+				    initialize(newCenter) ;
 				} else{
 					alert("nothing found bro ;D") ;
 				}
