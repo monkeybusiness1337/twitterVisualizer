@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<title>Tweet Servlet Test</title>
+</head>
+<body>
+<script>
+$(document).ready(function(){
+	$.getJSON( "TweetServlet?lat=48.20732&long=16.373792", function( data ) {
+		for(var i = 0 ; i < data.result.length ; i++){
+			console.log(data.result[i].user) ;
+		}
+	});
+}) ;
+</script>
+
+</body>
+</html>
