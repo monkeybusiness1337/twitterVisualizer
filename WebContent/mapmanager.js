@@ -520,7 +520,7 @@ function addMarker(map, geotweet, markerClass, shape, i){
 	  
    
    var tweetWindow = new google.maps.InfoWindow({
-	      content: '<div style="min-width:300px;max-width:320px;height:auto"><b><a href="http://twitter.com/'+geotweet.user+'" target="_blank">'+geotweet.user+'</a>: </b>' + geotweet.content + '<br/>' + pic + '</div>'
+	      content: '<div style="min-width:300px;max-width:320px;height:auto;"><b><a href="http://twitter.com/'+geotweet.user+'" target="_blank">'+geotweet.user+'</a>: </b>' + geotweet.content + '<br/>' + pic + '</div>'
 	});
 	
 	
