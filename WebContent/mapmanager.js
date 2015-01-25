@@ -122,7 +122,7 @@ $( document ).ready(function() {
 	
 	$('#openLoginPanel').click(function(){
 		console.log("asdasdasdasdasdasd") ;
-		document.location.href = "http://tomcat01lab.cs.univie.ac.at:31897/TweetServlet/LoginServlet";
+		document.location.href = "LoginServlet";
 	}) ;
 	
 	$('#logoutButton').click(function(){
